@@ -83,10 +83,10 @@ ostream& operator <<(ostream & out, const Environment_t<T>& E)
                 out << E.repartition[i*E.n+j][0].name << " ";
             }
             out << "]";
-            //for (int j=0; j<E.n; j++)
-            //{
-            //    out << E.conditions[i*E.n+j].parameters << " ";
-            //}
+            for (int j=0; j<E.n; j++)
+            {
+                out << E.conditions[i*E.n+j].parameters << " ";
+            }
             out << endl;
         }
     return out;

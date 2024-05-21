@@ -27,7 +27,7 @@ class Simulation
 {
     public :
         Vecteur<Environment_t<T>>  environment;                                          
-        Simulation(const Environment_t<T>& env_init, int nIter, float fecondity); //Constructor of the function 
+        Simulation(const Environment_t<T>& env_init, int nIter, float fecondity, bool plot); //Constructor of the function 
 };
 
 //======================================================================
@@ -35,7 +35,7 @@ class Simulation
 //======================================================================
 
 template<typename T>
-Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fecondity)
+Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fecondity, bool plot)
 {   
     //Initialization
     environment.resize(nIter);
@@ -47,8 +47,10 @@ Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fec
         for (int i=1; i<nIter; i++)
         {
             environment[i]=selection(reproduction(diffusion(environmentalChange(environment[i-1], i)),fecondity));
-            //cout << environment[i] << endl; // << imagePixel(environment[i]);
-            imagePlot(environment[i], i);
+            
+            //Display settings
+            if (plot==true){imagePlot(environment[i], i);}
+            else {cout << environment[i] << endl;}
         }
     }
     else 
@@ -56,8 +58,10 @@ Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fec
         for (int i=1; i<nIter; i++)
         {
             environment[i]=selection(diffusion(environmentalChange(environment[i-1], i)));
-            //cout << environment[i] << endl; // << imagePixel(environment[i]);
-            imagePlot(environment[i], i);
+            
+            //Display settings
+            if (plot==true){imagePlot(environment[i], i);}
+            else {cout << environment[i] << endl;}
         }
     }
     cout << environment[nIter-1].species;
@@ -118,10 +122,10 @@ Environment_t<T> selection(Environment_t<T> env)
             int ind(0);
             for (int k=0; k<env.repartition[i*env.n+j].size(); k++)
             {   
-                if ((env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / (env.conditions[i*env.n+j].parameters).norm() < score)
+                if ((env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / ((env.conditions[i*env.n+j].parameters).norm()+0.00001) < score)
                 {
                     ind = k;
-                    score = (env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / (env.conditions[i*env.n+j].parameters).norm();
+                    score = (env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / ((env.conditions[i*env.n+j].parameters).norm()+0.00001);
                 }
             }
             Vecteur<Specie<T>> bestSp({env.repartition[i*env.n+j][ind]});
