@@ -28,7 +28,6 @@ class Environment_t
         vector<VariableEnv<T>> conditions;                            //Environmental matrix
         vector<Specie<T>> species;                                    //List of species that live in the Environment_t
         vector<vector<Specie<T>>> repartition;                        //Species repartition matrix
-        envFunctor change; 
 
         //Constructors
         Environment_t(const T& v, vector<Specie<T>> sp, int n);      //Contructor of an homogeneous environmental matrix and the initial species repartition

@@ -77,31 +77,32 @@ Environment_t<T> diffusion(Environment_t<T> env)
 {
     for (int i=0; i<env.n; i++){
         for (int j=0; j<env.n; j++){
-            for (int k=1; k<=env.max_diffusion; k++) //(env.repartition[i*env.n+j][0]).diffusion_speed
+
+            for (int k=0; k<env.max_diffusion; k++) //(env.repartition[i*env.n+j][0]).diffusion_speed
             {
                 // Current specie diffuse in the k^th right cell and the specie in the k^th right cell come in the current cell if it can
-                if (j+k < env.n)
+                if (j+k+1 < env.n)
                 {
-                    if (k<=(env.repartition[i*env.n+j][0]).diffusion_speed)
+                    if (k<=(env.repartition[i*env.n+j+k][0]).diffusion_speed)
                     {
-                        env.repartition[i*env.n+j+k].push_back(env.repartition[i*env.n+j][0]);
+                        env.repartition[i*env.n+j+k+1].push_back(env.repartition[i*env.n+j+k][0]);
                     }
-                    if (k<=env.repartition[i*env.n+j+k][0].diffusion_speed)
+                    if (k<=env.repartition[i*env.n+j+k+1][0].diffusion_speed)
                     {
-                        env.repartition[i*env.n+j].push_back(env.repartition[i*env.n+j+k][0]);
+                        env.repartition[i*env.n+j+k].push_back(env.repartition[i*env.n+j+k+1][0]);
                     }
                 }
                 
                 // Current specie diffuse in the k^th lower cell and the specie in the k^th lower cell come up if it can
-                if (i+k < env.n)
+                if (i+k+1 < env.n)
                 {
-                    if (k<=(env.repartition[i*env.n+j][0]).diffusion_speed)
+                    if (k<=(env.repartition[(i+k)*env.n+j][0]).diffusion_speed)
                     {
-                        env.repartition[(i+k)*env.n+j].push_back(env.repartition[i*env.n+j][0]);
+                        env.repartition[(i+k+1)*env.n+j].push_back(env.repartition[(i+k)*env.n+j][0]);
                     }
-                    if (k<=env.repartition[(i+k)*env.n+j][0].diffusion_speed)
+                    if (k<=env.repartition[(i+k+1)*env.n+j][0].diffusion_speed)
                     {
-                        env.repartition[i*env.n+j].push_back(env.repartition[(i+k)*env.n+j][0]);
+                        env.repartition[(i+k)*env.n+j].push_back(env.repartition[(i+k+1)*env.n+j][0]);
                     }
                 }
                 
@@ -212,7 +213,6 @@ Vecteur<Vecteur<int>> imagePixel(Environment_t<T> env)
 template<typename T>
 void imagePlot(Environment_t<T>& env, int t)
 {
-
     //Generate pixel array
     Vecteur<Vecteur<int>> pixelArray = imagePixel(env);
 

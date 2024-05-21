@@ -8,8 +8,8 @@
 
 int main(int argc, char *argv[])
 {
-    int latticeSize = 10;      //Size of the network lattice
-    int nIter=10;              //Number of iteration in the simulation 
+    int latticeSize = 11;      //Size of the network lattice
+    int nIter=11;              //Number of iteration in the simulation 
     float unit=0.1;            //Unit of the square (to simplify function use)
 
     //Creation of the species' niches
