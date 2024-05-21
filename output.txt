@@ -258,3 +258,5 @@ Environnement homogène egual à 1 constant au cours du temps
 [A A A A A A A A A A A ][1] [1] [1] [1] [1] [1] [1] [1] [1] [1] [1] 
 
 [[A:[1]],[B:[0]]]
+
+

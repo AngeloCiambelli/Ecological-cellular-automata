@@ -228,7 +228,7 @@ void imagePlot(Environment_t<T>& env, int t)
     // Create an SFML image and load the pixel array into it
     sf::Image image;
     image.create(env.n, env.n, pixels);
-    image.saveToFile("/home/angelo/Documents/Master/MasterMaths/MesProjets/Network_diffusion/output/plot"+to_string(t)+".png");
+    image.saveToFile("/home/angelo/Documents/Master/MasterMaths/MesProjets/Network_diffusion/output/images/plot"+to_string(t)+".png");
 }
 
 #endif
