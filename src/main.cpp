@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[])
 {
-    int latticeSize = 101;      //Size of the network lattice
+    int latticeSize = 300;      //Size of the network lattice
     int nIter=100;              //Number of iteration in the simulation 
     float unit=0.1;            //Unit of the square (to simplify function use)
 
@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
     VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({0}));
 
     //Creation of the species
-    Specie<Vecteur<float>> A(niche_A,"A", 1);
-    Specie<Vecteur<float>> B(niche_B,"B", 1);
+    Specie<Vecteur<float>> A(niche_A,"A", 5);
+    Specie<Vecteur<float>> B(niche_B,"B", 3);
 
     //Creation of the species list
     vector<Specie<Vecteur<float>>> sp_vect({A, B});

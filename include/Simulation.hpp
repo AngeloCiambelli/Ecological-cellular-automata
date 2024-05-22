@@ -26,7 +26,7 @@ template<typename T>
 class Simulation
 {
     public :
-        Vecteur<Environment_t<T>>  environment;                                          
+        Environment_t<T>  environment;                                          
         Simulation(const Environment_t<T>& env_init, int nIter, float fecondity, bool plot); //Constructor of the function 
 };
 
@@ -38,33 +38,35 @@ template<typename T>
 Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fecondity, bool plot)
 {   
     //Initialization
-    environment.resize(nIter);
-    environment[0] = env_init;
-    imagePlot(environment[0], 0);
+    //environment.resize(nIter);
+    environment = env_init;
+    //environment = env_init;
+    imagePlot(environment, 0);
+    //imagePlot(environment[0], 0);
 
     if (fecondity!=0)
     {
         for (int i=1; i<nIter; i++)
         {
-            environment[i]=selection(reproduction(diffusion(environmentalChange(environment[i-1], i)),fecondity));
+            environment=selection(reproduction(diffusion(environmentalChange(environment, i)),fecondity));
             
             //Display settings
-            if (plot==true){imagePlot(environment[i], i);}
-            else {cout << environment[i] << endl;}
+            if (plot==true){imagePlot(environment, i);}
+            else {cout << environment << endl;}
         }
     }
     else 
     {
         for (int i=1; i<nIter; i++)
         {
-            environment[i]=selection(diffusion(environmentalChange(environment[i-1], i)));
+            environment=selection(diffusion(environmentalChange(environment, i)));
             
             //Display settings
-            if (plot==true){imagePlot(environment[i], i);}
-            else {cout << environment[i] << endl;}
+            if (plot==true){imagePlot(environment, i);}
+            else {cout << environment << endl;}
         }
     }
-    cout << environment[nIter-1].species;
+    cout << environment.species;
 }
 
 //======================================================================
@@ -77,35 +79,25 @@ Environment_t<T> diffusion(Environment_t<T> env)
 {
     for (int i=0; i<env.n; i++){
         for (int j=0; j<env.n; j++){
-
-            for (int k=0; k<env.max_diffusion; k++) //(env.repartition[i*env.n+j][0]).diffusion_speed
-            {
-                // Current specie diffuse in the k^th right cell and the specie in the k^th right cell come in the current cell if it can
-                if (j+k+1 < env.n)
-                {
-                    if (k<=(env.repartition[i*env.n+j+k][0]).diffusion_speed)
+            for (int k=0; k<=(env.repartition[i*env.n+j][0]).diffusion_speed; k++){
+                for (int l=0; l<=(env.repartition[i*env.n+j][0]).diffusion_speed-k; l++){
+                    if ((i+l < env.n) and (j+k < env.n))
                     {
-                        env.repartition[i*env.n+j+k+1].push_back(env.repartition[i*env.n+j+k][0]);
+                       env.repartition[(i+l)*env.n+k+j].push_back(env.repartition[i*env.n+j][0]);
                     }
-                    if (k<=env.repartition[i*env.n+j+k+1][0].diffusion_speed)
+                    if ((i-l >= 0) and (j-k >= 0))
                     {
-                        env.repartition[i*env.n+j+k].push_back(env.repartition[i*env.n+j+k+1][0]);
+                       env.repartition[(i-l)*env.n-k+j].push_back(env.repartition[i*env.n+j][0]);
                     }
-                }
-                
-                // Current specie diffuse in the k^th lower cell and the specie in the k^th lower cell come up if it can
-                if (i+k+1 < env.n)
-                {
-                    if (k<=(env.repartition[(i+k)*env.n+j][0]).diffusion_speed)
+                    if ((i+l < env.n) and (j-k >= 0))
                     {
-                        env.repartition[(i+k+1)*env.n+j].push_back(env.repartition[(i+k)*env.n+j][0]);
+                       env.repartition[(i+l)*env.n-k+j].push_back(env.repartition[i*env.n+j][0]);
                     }
-                    if (k<=env.repartition[(i+k+1)*env.n+j][0].diffusion_speed)
+                    if ((i-l >= 0) and (j+k < env.n))
                     {
-                        env.repartition[(i+k)*env.n+j].push_back(env.repartition[(i+k+1)*env.n+j][0]);
+                       env.repartition[(i-l)*env.n+k+j].push_back(env.repartition[i*env.n+j][0]);
                     }
                 }
-                
             }
         }
     }
@@ -123,10 +115,10 @@ Environment_t<T> selection(Environment_t<T> env)
             int ind(0);
             for (int k=0; k<env.repartition[i*env.n+j].size(); k++)
             {   
-                if ((env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / ((env.conditions[i*env.n+j].parameters).norm()+0.00001) < score)
+                if ((env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / ((env.conditions[i*env.n+j].parameters).norm()+float(0.0001)) < score)
                 {
                     ind = k;
-                    score = (env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / ((env.conditions[i*env.n+j].parameters).norm()+0.00001);
+                    score = (env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / ((env.conditions[i*env.n+j].parameters).norm()+float(0.0001));
                 }
             }
             Vecteur<Specie<T>> bestSp({env.repartition[i*env.n+j][ind]});
