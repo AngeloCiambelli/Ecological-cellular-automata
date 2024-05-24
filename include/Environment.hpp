@@ -23,16 +23,16 @@ class Environment_t
 {
     public :
         int n;                                                        //Size of the grid
-        int max_diffusion;                                            //Diffusion maximum speed (number of case travelled/iterations)
         float unit;                                                   //Unit of the grid
         vector<VariableEnv<T>> conditions;                            //Environmental matrix
         vector<Specie<T>> species;                                    //List of species that live in the Environment_t
         vector<vector<Specie<T>>> repartition;                        //Species repartition matrix
+        int capacity;                                                 //Maximum number of individuals per grid node
+
 
         //Constructors
-        Environment_t(const T& v, vector<Specie<T>> sp, int n);      //Contructor of an homogeneous environmental matrix and the initial species repartition
-        Environment_t(){};                                           //Empty constructor
-        Environment_t(float unit, vector<Specie<T>> sp, int n);      //
+        Environment_t(){};                                                    //Empty constructor
+        Environment_t(float unit, vector<Specie<T>> sp, int m, int cap);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
 };
 
 //======================================================================
@@ -41,7 +41,7 @@ class Environment_t
 
 //Constructor
 template<typename T>
-Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m)
+Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m, int cap)
 {
     n = m;            //Size of the environmental matrix
     unit=unitEnv;     //Unit of the environment
@@ -54,11 +54,8 @@ Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m)
     //Species
     species = sp;
 
-    //Get the maximum diffusion speed among the species
-    for (int i=0; i<sp.size(); i++)
-    {
-        if(max_diffusion < sp[i].diffusion_speed){max_diffusion=sp[i].diffusion_speed;};
-    }
+    //Capacity
+    capacity = cap;
 
     //Construction of the intial repartition
     repartition.resize(n*n);
@@ -82,11 +79,10 @@ ostream& operator <<(ostream & out, const Environment_t<T>& E)
                 out << E.repartition[i*E.n+j][0].name << " ";
             }
             out << "]";
-            /*for (int j=0; j<E.n; j++)
+            for (int j=0; j<E.n; j++)
             {
                 out << E.conditions[i*E.n+j].parameters << " ";
             }
-            */
             out << endl;
         }
     return out;

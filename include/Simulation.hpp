@@ -73,7 +73,7 @@ Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fec
 //                          External functions
 //======================================================================
 
-//Diffusion of the species on the grid
+//Diffusion of the species on the grid (determinist)
 template<typename T>
 Environment_t<T> diffusion(Environment_t<T> env)
 {
@@ -105,7 +105,7 @@ Environment_t<T> diffusion(Environment_t<T> env)
     return env;
 }
 
-//Selection of the best adapted specie in each node of the grid
+//Selection of the best adapted specie in each node of the grid (determinist)
 template<typename T>
 Environment_t<T> selection(Environment_t<T> env)
 {

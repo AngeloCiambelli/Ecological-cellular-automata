@@ -26,7 +26,7 @@ class envChangeFunctor
 public:
   VariableEnv<Vecteur<float>> operator()(float unit, double i, double j, double n, double t) const
   {
-    VariableEnv<Vecteur<float>> newEnv(Vecteur<float>({float(10.f/(t))}));  // add additional dimensions of the env if needed (nD) //{float((i*unit)/((n-1)*unit))}
+    VariableEnv<Vecteur<float>> newEnv(Vecteur<float>({float(1)}));  // add additional dimensions of the env if needed (nD) //{float((i*unit)/((n-1)*unit))}
     return VariableEnv(newEnv);
   }
 };
