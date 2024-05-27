@@ -26,7 +26,9 @@ class envChangeFunctor
 public:
   VariableEnv<Vecteur<float>> operator()(float unit, double i, double j, double n, double t) const
   {
-    VariableEnv<Vecteur<float>> newEnv(Vecteur<float>({float(1)}));  // add additional dimensions of the env if needed (nD) //{float((i*unit)/((n-1)*unit))}
+    //Vecteur<float> newEnv({float(0)});
+    //if (i <= (n-1)/2){newEnv = Vecteur<float>({float(1)});}
+    VariableEnv<Vecteur<float>> newEnv(Vecteur<float>({float((i*unit)/((n-1)*unit))}));  // add additional dimensions of the env if needed (nD) //{float((i*unit)/((n-1)*unit))}
     return VariableEnv(newEnv);
   }
 };
@@ -40,8 +42,9 @@ public:
     for (int i=0; i<n; i++){
       for (int j=0; j<n; j++)
       {
-        if (i==(n-1)/2 & j==(n-1)/2) {rep[i*n+j].push_back(sp[0]);}
+        if (i==(n-1) /* &j==(n-1)/2)*/) {rep[i*n+j].push_back(sp[0]);}
         else {rep[i*n+j].push_back(sp[1]);}
+        //else if (i==3*(n-1)/4 /*& j==3*(n-1)/4*/){rep[i*n+j].push_back(sp[1]);}
       }
     }
     return(rep);
@@ -57,7 +60,9 @@ public:
     for (int i=0; i<n; i++){
       for (int j=0; j<n; j++)
       {
-        env[i*n+j].parameters=Vecteur<float>({1});  // add additional dimensions of the env if needed (nD) {float((i*unit)/((n-1)*unit))}
+        //if (i <= (n-1)/2){env[i*n+j].parameters=Vecteur<float>({1});}
+        //else {env[i*n+j].parameters=Vecteur<float>({0});}
+        env[i*n+j].parameters=Vecteur<float>({float((i*unit)/((n-1)*unit))});  // add additional dimensions of the env if needed (nD) {float((i*unit)/((n-1)*unit))}
       }
     }
     return(env);

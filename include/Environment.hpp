@@ -27,12 +27,10 @@ class Environment_t
         vector<VariableEnv<T>> conditions;                            //Environmental matrix
         vector<Specie<T>> species;                                    //List of species that live in the Environment_t
         vector<vector<Specie<T>>> repartition;                        //Species repartition matrix
-        int capacity;                                                 //Maximum number of individuals per grid node
-
 
         //Constructors
-        Environment_t(){};                                                    //Empty constructor
-        Environment_t(float unit, vector<Specie<T>> sp, int m, int cap);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
+        Environment_t(){};                                            //Empty constructor
+        Environment_t(float unit, vector<Specie<T>> sp, int m);       //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
 };
 
 //======================================================================
@@ -41,7 +39,7 @@ class Environment_t
 
 //Constructor
 template<typename T>
-Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m, int cap)
+Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m)
 {
     n = m;            //Size of the environmental matrix
     unit=unitEnv;     //Unit of the environment
@@ -53,9 +51,6 @@ Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m, int 
 
     //Species
     species = sp;
-
-    //Capacity
-    capacity = cap;
 
     //Construction of the intial repartition
     repartition.resize(n*n);
@@ -76,7 +71,8 @@ ostream& operator <<(ostream & out, const Environment_t<T>& E)
             out << "[";
             for (int j=0; j<E.n; j++)
             {
-                out << E.repartition[i*E.n+j][0].name << " ";
+                if (E.repartition[i*E.n+j].size()!=0) {out << E.repartition[i*E.n+j][0].name << " ";}
+                else {out << "  ";}
             }
             out << "]";
             for (int j=0; j<E.n; j++)

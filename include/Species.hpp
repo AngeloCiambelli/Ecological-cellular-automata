@@ -62,7 +62,7 @@ Specie<T> mean(Specie<T> A, Specie<T> B)
 template<typename T>
 ostream& operator <<(ostream & out, const Specie<T>& sp)
 {   
-    out << "[" << sp.name << ":" << sp.niche << "]";
+    out << sp.name << ":" << sp.niche ;
     return out;
 }
 #endif
