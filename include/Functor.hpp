@@ -24,11 +24,12 @@ using namespace std;
 class envChangeFunctor
 {
 public:
-  VariableEnv<Vecteur<float>> operator()(float unit, double i, double j, double n, double t) const
+  VariableEnv<Vecteur<float>> operator()(float unit, float i, float j, float n, float t, float a, float b) const
   {
     //Vecteur<float> newEnv({float(0)});
-    //if (i <= (n-1)/2){newEnv = Vecteur<float>({float(1)});}
-    VariableEnv<Vecteur<float>> newEnv(Vecteur<float>({float((i*unit)/((n-1)*unit))}));  // add additional dimensions of the env if needed (nD) //{float((i*unit)/((n-1)*unit))}
+    float coeff = (10-int(t)%10)*a;
+    //if (i <= (n-1)/2){newEnv = Vecteur<float>({float(1)});} 
+    VariableEnv<Vecteur<float>> newEnv(Vecteur<float>({(sin(float(i*unit)*M_PIf*a/2+t*b)*cos(float(j*unit))+1.f)}));  // add additional dimensions of the env if needed (nD) //{float((i*unit)/((n-1)*unit))}
     return VariableEnv(newEnv);
   }
 };
@@ -42,7 +43,7 @@ public:
     for (int i=0; i<n; i++){
       for (int j=0; j<n; j++)
       {
-        if (i==(n-1) /* &j==(n-1)/2)*/) {rep[i*n+j].push_back(sp[0]);}
+        if (i%2==1 /* &j==(n-1)/2)*/) {rep[i*n+j].push_back(sp[0]);}
         else {rep[i*n+j].push_back(sp[1]);}
         //else if (i==3*(n-1)/4 /*& j==3*(n-1)/4*/){rep[i*n+j].push_back(sp[1]);}
       }
@@ -55,14 +56,14 @@ public:
 class envFunctor
 {
 public:
-  vector<VariableEnv<Vecteur<float>>>& operator()(vector<VariableEnv<Vecteur<float>>>& env, int n, float unit)
+  vector<VariableEnv<Vecteur<float>>>& operator()(vector<VariableEnv<Vecteur<float>>>& env, int n, float unit, float a)
   {
     for (int i=0; i<n; i++){
       for (int j=0; j<n; j++)
       {
         //if (i <= (n-1)/2){env[i*n+j].parameters=Vecteur<float>({1});}
         //else {env[i*n+j].parameters=Vecteur<float>({0});}
-        env[i*n+j].parameters=Vecteur<float>({float((i*unit)/((n-1)*unit))});  // add additional dimensions of the env if needed (nD) {float((i*unit)/((n-1)*unit))}
+        env[i*n+j].parameters=Vecteur<float>({sin(float(i*unit)*M_PIf*a)*cos(float(j*unit))});  // add additional dimensions of the env if needed (nD) {float((i*unit)/((n-1)*unit))}
       }
     }
     return(env);

@@ -28,7 +28,7 @@ class Simulation
 {
     public :
         Environment_t<T>  environment;                                          
-        Simulation(const Environment_t<T>& env_init, int nIter, float fecondity, bool plot, string filename); //Constructor of the function 
+        Simulation(const Environment_t<T>& env_init, int nIter, float fecondity, bool plot, string filename, float a, float b); //Constructor of the function 
 };
 
 //======================================================================
@@ -36,7 +36,7 @@ class Simulation
 //======================================================================
 
 template<typename T>
-Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fecondity, bool plot, string filename)
+Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fecondity, bool plot, string filename, float a, float b)
 {   
     //Initialization
     environment = env_init;
@@ -44,7 +44,7 @@ Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fec
 
     for (int i=1; i<nIter; i++)
     {
-        environment=selection(diffusion(environmentalChange(environment, i)));
+        environment=selection(diffusion(environmentalChange(environment, i, a, b)));
         
         //Display settings
         if (plot==true){imagePlot(environment, i, filename);}
@@ -104,7 +104,7 @@ Environment_t<T> selection(Environment_t<T> env)
 
     for (int i=0; i<env.n; i++){
         for (int j=0; j<env.n; j++){
-            float score(100000);
+            float score(1000000);
             int ind(0);
             
             for (int k=0; k<env.repartition[i*env.n+j].size(); k++)
@@ -128,12 +128,12 @@ Environment_t<T> selection(Environment_t<T> env)
 
 //Change in the environment according to the functor : f_t(conditions)
 template<typename T>
-Environment_t<T> environmentalChange(Environment_t<T> env, float t)
+Environment_t<T> environmentalChange(Environment_t<T> env, float t, float a, float b)
 {   
     for (int i=0; i<env.n; i++){
         for (int j=0; j<env.n; j++){
             envChangeFunctor f;
-            env.conditions[i*env.n+j] = f(env.unit, i, j, env.n, t);
+            env.conditions[i*env.n+j] = f(env.unit, i, j, env.n, t, a, b);
         }
     }
     return env;
@@ -229,7 +229,8 @@ void imagePlot(Environment_t<T>& env, int t, std::string filename)
     //Automatic name
     filename += + "t=" + to_string(t) + "\n ";
     for (int i = 0; i < env.species.size(); i++) {
-        filename += env.species[i].name + ":[{" + std::to_string(llround(env.species[i].niche.parameters[0])) + "}," + to_string(env.species[i].diffusion_speed) + "]";
+        std::ostringstream niche_stream; niche_stream << std::fixed << std::setprecision(1) << env.species[i].niche.parameters[0];
+        filename += env.species[i].name + ":[{" + niche_stream.str() + "}," + to_string(env.species[i].diffusion_speed) + "]";
         if (i<env.species.size()-1){filename += "_";}
     }
 
@@ -271,7 +272,7 @@ void imagePlot(Environment_t<T>& env, int t, std::string filename)
     //Display the result and save to a file
     renderTexture.display();
     sf::Image finalImage = renderTexture.getTexture().copyToImage();
-    finalImage.saveToFile(path+"/output/images/" + filename + ".png");
+    finalImage.saveToFile(path+"/output/images/ " + filename + ".png");
 
     //Clean up
     delete[] pixels;

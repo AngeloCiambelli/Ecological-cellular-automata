@@ -30,7 +30,7 @@ class Environment_t
 
         //Constructors
         Environment_t(){};                                            //Empty constructor
-        Environment_t(float unit, vector<Specie<T>> sp, int m);       //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
+        Environment_t(float unit, vector<Specie<T>> sp, int m, float a, float b);       //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
 };
 
 //======================================================================
@@ -39,7 +39,7 @@ class Environment_t
 
 //Constructor
 template<typename T>
-Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m)
+Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m, float a, float b)
 {
     n = m;            //Size of the environmental matrix
     unit=unitEnv;     //Unit of the environment
@@ -47,7 +47,7 @@ Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m)
     //Construction of the environmental matrix
     conditions.resize(n*n);
     envFunctor intialEnv; 
-    intialEnv(conditions, n, unit);
+    intialEnv(conditions, n, unit, a);
 
     //Species
     species = sp;
