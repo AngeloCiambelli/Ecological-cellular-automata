@@ -27,9 +27,9 @@ public:
   VariableEnv<Vecteur<float>> operator()(float unit, float i, float j, float n, float t, float a, float b) const
   {
     //Vecteur<float> newEnv({float(0)});
-    float coeff = (10-int(t)%10)*a;
+    //float coeff = (10-int(t)%10)*a;
     //if (i <= (n-1)/2){newEnv = Vecteur<float>({float(1)});} 
-    VariableEnv<Vecteur<float>> newEnv(Vecteur<float>({(sin(float(i*unit)*M_PIf*a/2+t*b)*cos(float(j*unit))+1.f)}));  // add additional dimensions of the env if needed (nD) //{float((i*unit)/((n-1)*unit))}
+    VariableEnv<Vecteur<float>> newEnv(Vecteur<float>({(10-int(t)%10)*a*(sin(i*unit)*cos(j*unit))+(10-int(t)%10)*a}));  // add additional dimensions of the env if needed (nD) //{float((i*unit)/((n-1)*unit))}
     return VariableEnv(newEnv);
   }
 };
@@ -63,7 +63,7 @@ public:
       {
         //if (i <= (n-1)/2){env[i*n+j].parameters=Vecteur<float>({1});}
         //else {env[i*n+j].parameters=Vecteur<float>({0});}
-        env[i*n+j].parameters=Vecteur<float>({sin(float(i*unit)*M_PIf*a)*cos(float(j*unit))});  // add additional dimensions of the env if needed (nD) {float((i*unit)/((n-1)*unit))}
+        env[i*n+j].parameters=Vecteur<float>({sin(i*unit)*cos(j*unit)});  // add additional dimensions of the env if needed (nD) {float((i*unit)/((n-1)*unit))}
       }
     }
     return(env);

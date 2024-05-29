@@ -22,14 +22,15 @@ template<typename T>
 class Environment_t
 {
     public :
-        int n;                                                        //Size of the grid
-        float unit;                                                   //Unit of the grid
+        int n;                                                        //Size of the lattice
+        float unit;                                                   //Unit of the lattice
         vector<VariableEnv<T>> conditions;                            //Environmental matrix
         vector<Specie<T>> species;                                    //List of species that live in the Environment_t
         vector<vector<Specie<T>>> repartition;                        //Species repartition matrix
+        vector<int> numberOfChanges;                                  //Number of changes in the occupancy for every spot in the lattice
 
         //Constructors
-        Environment_t(){};                                            //Empty constructor
+        Environment_t(){};                                                              //Empty constructor
         Environment_t(float unit, vector<Specie<T>> sp, int m, float a, float b);       //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
 };
 
@@ -39,7 +40,7 @@ class Environment_t
 
 //Constructor
 template<typename T>
-Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m, float a, float b)
+Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m, float a, float b) : numberOfChanges(m*m, 0)
 {
     n = m;            //Size of the environmental matrix
     unit=unitEnv;     //Unit of the environment
@@ -55,8 +56,8 @@ Environment_t<T>::Environment_t(float unitEnv, vector<Specie<T>> sp, int m, floa
     //Construction of the intial repartition
     repartition.resize(n*n);
     repFunctor initialRep;
-    //vector<vector<Specie<T>>> rep(n*n, vector<Specie<T>> (1, sp[0]));
     initialRep(repartition, n, sp);
+
 }
 
 //======================================================================

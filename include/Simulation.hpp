@@ -15,6 +15,7 @@
 #include "Environment.hpp"
 #include "Functor.hpp"
 #include "Vecteur.hpp"
+#include "Display.hpp"
 
 
 using namespace std;
@@ -40,17 +41,47 @@ Simulation<T>::Simulation(const Environment_t<T>& env_init, int nIter, float fec
 {   
     //Initialization
     environment = env_init;
-    imagePlot(environment, 0, filename);
+    //Dimensions to display in the environment
+    int dimension=0;
+
+    //Generate pixel array
+    if (plot==true)
+    {
+        tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  repartitionPixels = repartitionToPixel(environment);
+        tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  changePixels = changeToPixel(environment.numberOfChanges);
+        tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  envPixels = envToPixel(environment.conditions, 0);
+
+        imagePlot(repartitionPixels, 0, filename+"repartition.png", environment.n);
+        imagePlot(changePixels, 0, filename + "numberChange.png", environment.n);
+        imagePlot(envPixels, 0, filename + "environment dimension "+to_string(dimension)+".png", environment.n);
+    }
 
     for (int i=1; i<nIter; i++)
     {
         environment=selection(diffusion(environmentalChange(environment, i, a, b)));
         
         //Display settings
-        if (plot==true){imagePlot(environment, i, filename);}
+        if (plot==true)
+        {
+            //Generate pixel array
+            tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  repartitionPixels = repartitionToPixel(environment);
+            tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  changePixels = changeToPixel(environment.numberOfChanges);
+            tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  envPixels = envToPixel(environment.conditions, dimension);
+
+            //Filenames
+            string repFile = filename + "repartition \n t=" + to_string(i) + ".png";
+            string changeFile = filename + "numberChange \n t=" + to_string(i) + ".png";
+            string envFile = filename + "environment dimension " + to_string(dimension) +"\n t=" + to_string(i) + ".png";
+
+            //Save image
+            imagePlot(repartitionPixels, i, repFile, environment.n);
+            imagePlot(changePixels, i, changeFile, environment.n);
+            imagePlot(envPixels, i, envFile, environment.n);
+
+            mergeImage(envFile, repFile, changeFile, "env_rep_change_t="+to_string(i)+".png");
+        }
         else {cout << environment << endl;}
     }
-    cout << environment.species;
 }
 
 //======================================================================
@@ -118,6 +149,11 @@ Environment_t<T> selection(Environment_t<T> env)
             
             if (newEnv.repartition[i*env.n+j].size()!=0)
             {
+                if (ind!=0)
+                {
+                    newEnv.numberOfChanges[i*env.n+j]+=1;
+                }
+
                 Vecteur<Specie<T>> bestSp({env.repartition[i*env.n+j][ind]});
                 newEnv.repartition[i*env.n+j]=bestSp;
             }
@@ -165,118 +201,5 @@ Environment_t<T> reproduction(Environment_t<T> env, float fecondity)
     }
     return env;
 }
-
-//Convert the repartition to a pixel array
-template<typename T>
-Vecteur<Vecteur<int>> imagePixel(Environment_t<T> env)
-{
-    //Create the color palette
-    Vecteur<Vecteur<int>> colorMap(env.species.size(), Vecteur<int> ({0, 0, 0, 255}));
-    for(int i=0 ; i<env.species.size(); i++)
-    {
-        if (i==0){colorMap[i][0]=100; colorMap[i][1]=175; colorMap[i][2]=50;}
-        else if (i==1){colorMap[i][0]=225; colorMap[i][1]=216; colorMap[i][2]=75;}
-        else if (i!=0 & i!=1)
-        {
-            colorMap[i][2]=floor((i+1)*255/env.species.size());
-        }
-    }
-
-    //Fill in a pixel array with the corresponding colormap
-    Vecteur<Vecteur<int>> pixelArray(env.n*env.n, Vecteur<int> ({0, 0, 0, 255}));
-
-    for (int i=0; i<env.n; i++)
-    {
-        for (int j=0; j<env.n; j++)
-        {
-            if (env.repartition[i*env.n+j].size()!=0)
-            {
-                int k = (find(env.species.begin(), env.species.end(), (env.repartition[i*env.n+j][0])) - env.species.begin());
-                pixelArray[i*env.n+j][0] = colorMap[k][0];
-                pixelArray[i*env.n+j][1] = colorMap[k][1];
-                pixelArray[i*env.n+j][2] = colorMap[k][2];
-            }   
-        }
-    }
-    
-    return(pixelArray);
-}
-
-//Add a legend to the image
-void addLegend(sf::RenderTarget& target, const std::string& legendText, sf::Font& font) 
-{
-    // Create the text for the legend
-    sf::Text legendTextObj;
-    legendTextObj.setFont(font);
-    legendTextObj.setString(legendText);
-    legendTextObj.setCharacterSize(9);
-    legendTextObj.setFillColor(sf::Color::White);
-
-    // Draw the legend
-    target.draw(legendTextObj);
-}
-
-//Save an image
-template<typename T>
-void imagePlot(Environment_t<T>& env, int t, std::string filename) 
-{
-    //Generate pixel array
-    Vecteur<Vecteur<int>> pixelArray = imagePixel(env);
-
-    //Working directory
-    string path = "/home/angelo/Documents/Master/MasterMaths/MesProjets/Network_diffusion/";
-
-    //Automatic name
-    filename += + "t=" + to_string(t) + "\n ";
-    for (int i = 0; i < env.species.size(); i++) {
-        std::ostringstream niche_stream; niche_stream << std::fixed << std::setprecision(1) << env.species[i].niche.parameters[0];
-        filename += env.species[i].name + ":[{" + niche_stream.str() + "}," + to_string(env.species[i].diffusion_speed) + "]";
-        if (i<env.species.size()-1){filename += "_";}
-    }
-
-    //Convert the pixel array to an sf::Uint8 array
-    sf::Uint8* pixels = new sf::Uint8[env.n * env.n * 4];
-    for (unsigned int i = 0; i < env.n * env.n; ++i) {
-        pixels[i * 4] = pixelArray[i][0];     // Red
-        pixels[i * 4 + 1] = pixelArray[i][1]; // Green
-        pixels[i * 4 + 2] = pixelArray[i][2]; // Blue
-        pixels[i * 4 + 3] = pixelArray[i][3]; // Alpha
-    }
-
-    //Create an SFML texture and sprite from the pixel array
-    sf::Texture texture;
-    texture.create(env.n, env.n);
-    texture.update(pixels);
-
-    sf::Sprite sprite;
-    sprite.setTexture(texture);
-
-    //Create an SFML render texture to draw everything
-    sf::RenderTexture renderTexture;
-    renderTexture.create(env.n, env.n);
-
-    //Draw the sprite (the image)
-    renderTexture.draw(sprite);
-
-    //Load a font
-    sf::Font font;
-    if (!font.loadFromFile(path+"lib/AnonymousProMinus/Anonymous Pro Minus.ttf")) {
-        delete[] pixels;
-        return; //Error loading font
-    }
-
-    //Create and add the title and legend
-    std::string legendText = " " + filename;
-    addLegend(renderTexture, legendText, font);
-
-    //Display the result and save to a file
-    renderTexture.display();
-    sf::Image finalImage = renderTexture.getTexture().copyToImage();
-    finalImage.saveToFile(path+"/output/images/ " + filename + ".png");
-
-    //Clean up
-    delete[] pixels;
-}
-
 
 #endif
