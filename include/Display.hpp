@@ -19,8 +19,7 @@
 using namespace std;
 
 //Convert the repartition to a pixel array
-template<typename T>
-tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(Environment_t<T> env){
+tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(Environment_t env){
 
     //Create the color palette
     Vecteur<Vecteur<int>> colorMap(env.species.size(), Vecteur<int> ({0, 0, 0, 255}));
@@ -108,8 +107,8 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(vector<Variab
 
     //Fill the pixel array
     for (int i=0; i<x.size(); i++){
-        pixelArray[i][1] = (1-(x[i].parameters)[dimension]/xMax) * 255;
-        pixelArray[i][2] = (1-(x[i].parameters)[dimension]/xMax) * 255;
+        pixelArray[i][1] = (x[i].parameters)[dimension]/xMax * 255;
+        pixelArray[i][2] = (x[i].parameters)[dimension]/xMax * 255;
     }
 
     //Convert the pixel array to an sf::Uint8 array
@@ -211,7 +210,7 @@ void imagePlot(tuple<sf::Uint8*, string, string, sf::Color, sf::Color> pixels, i
 
     //Create an SFML render texture to draw everything, including extra space for the legend
     sf::RenderTexture renderTexture;
-    if (!renderTexture.create(n, n + 90)) {
+    if (!renderTexture.create(n, n + 100)) {
         delete[] get<0>(pixels);
         return; // Error creating render texture
     }
