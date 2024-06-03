@@ -64,7 +64,7 @@ class Environment_t
 
 //float unitEnv, int m, float a, float b,
 //Constructor
-Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string GenType) : numberOfChanges(int(parameters["n"]*parameters["n"]), 0)
+Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string genType) : numberOfChanges(int(parameters["n"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];                  
@@ -78,7 +78,7 @@ Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, st
     //Construction of the environmental matrix
     conditions.resize(n*n);
     envFunctor intialEnv; 
-    intialEnv(conditions, parameters, GenType);
+    intialEnv(conditions, parameters, genType);
 
     //Species
     species = sp;

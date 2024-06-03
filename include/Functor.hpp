@@ -62,7 +62,7 @@ public:
       for (int i=0; i<parameters["n"]; i++){
         for (int j=0; j<parameters["n"]; j++)
         {
-          env[i*parameters["n"]+j].parameters=Vecteur<float>({1});  // add additional dimensions of the env if needed (nD) {float((i*unit)/((n-1)*unit))}
+          env[i*parameters["n"]+j].parameters=Vecteur<float>({sin(0.5f*float(parameters["envDilatation"]*i*parameters["unit"])+0.5f)});  // add additional dimensions of the env if needed (nD) {float((i*unit)/((n-1)*unit))}
         }
       }
     }
@@ -74,7 +74,7 @@ public:
           std::random_device rd{};
           std::mt19937 gen{rd()};
           normal_distribution<float> dist(parameters["distMean"],sqrt(parameters["distVar"]));
-          env[i*parameters["n"]+j].parameters=Vecteur<float>({dist(gen)});  
+          env[i*parameters["n"]+j].parameters=Vecteur<float>({float(dist(gen))});  
         }
       }
     }

@@ -107,8 +107,8 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(vector<Variab
 
     //Fill the pixel array
     for (int i=0; i<x.size(); i++){
-        pixelArray[i][1] = (x[i].parameters)[dimension]/xMax * 255;
-        pixelArray[i][2] = (x[i].parameters)[dimension]/xMax * 255;
+        pixelArray[i][1] = (1-abs(x[i].parameters[dimension]-xMin)/abs(xMax-xMin)) * 255;
+        pixelArray[i][2] = (1-abs(x[i].parameters[dimension]-xMin)/abs(xMax-xMin)) * 255;
     }
 
     //Convert the pixel array to an sf::Uint8 array
@@ -285,6 +285,72 @@ void mergeImage(string image1, string image2, string image3, string finalFileNam
 
     //Save the combined image to a file
     combinedTexture.copyToImage().saveToFile(path+"output/images/ "+ finalFileName);
+}
+
+
+//Make a grid image 
+void gridPlot(std::tuple<sf::Uint8*, std::string, std::string, sf::Color, sf::Color> pixels, sf::RenderTarget& envRender, int n, int i, 
+              int j, int padding, float pVal1, float pVal2, std::string pName1="Parameter1", std::string pName2="Parameter2") 
+    {
+    // Working directory
+    std::string path = "/home/angelo/Documents/Master/MasterMaths/MesProjets/Network_diffusion/";
+
+    // Create an SFML texture from the pixel array and update it
+    sf::Texture texture;
+    texture.create(n, n);
+    texture.update(std::get<0>(pixels));
+
+    // Create a sprite to draw the texture onto the render texture
+    sf::Sprite sprite(texture);
+
+    // Calculate the position of the texture within the render texture
+    sprite.setPosition(i*n+(i+1)*padding, j*n+(j+1)*padding);
+    
+    // Start drawing on the render texture
+    envRender.draw(sprite);
+
+    // Load a font
+    sf::Font font;
+    if (!font.loadFromFile(path + "lib/AnonymousProMinus/Anonymous Pro Minus.ttf")) {
+        std::cerr << "Error loading font" << std::endl;
+        delete[] std::get<0>(pixels);
+        return;
+    }
+
+    // Create the text for the legend
+    sf::Text legendTextObj;
+    legendTextObj.setFont(font);
+    legendTextObj.setCharacterSize(14); // Adjust the size as needed
+    legendTextObj.setFillColor(sf::Color::Black);
+
+    //Convert the values 1 and 2 with a certain certaincy on display. 
+    std::ostringstream valStream1; valStream1 << std::fixed << std::setprecision(2) << pVal1;
+    std::ostringstream valStream2; valStream2 << std::fixed << std::setprecision(2) << pVal2;
+
+    if (i == 0 && j == 0) {
+        sf::Text legendText1(pName1 + ":" + valStream1.str(), font, 10);
+        legendText1.setFillColor(sf::Color::Black);
+        legendText1.setCharacterSize(14); // Adjust the size as needed
+        legendText1.setPosition(padding + n / 2, padding / 2);
+        envRender.draw(legendText1);
+
+        sf::Text legendText2(pName2 + ":\n" + valStream2.str(), font, 10);
+        legendText2.setFillColor(sf::Color::Black);
+        legendText2.setCharacterSize(14); // Adjust the size as needed
+        legendText2.setPosition(padding/4, padding + n / 2);
+        envRender.draw(legendText2);
+    } else if (i == 0 && j != 0) {
+        legendTextObj.setString(valStream2.str());
+        legendTextObj.setPosition(padding/4, j * (padding + n) + padding + n/ 2);
+        envRender.draw(legendTextObj);
+    } else if (i != 0 && j == 0) {
+        legendTextObj.setString(valStream1.str());
+        legendTextObj.setPosition(i * (padding + n) + padding/2 + n / 2, padding / 2);
+        envRender.draw(legendTextObj);
+    }
+
+    // Clean up
+    delete[] std::get<0>(pixels);
 }
 
 #endif

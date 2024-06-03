@@ -69,15 +69,15 @@ Environment_t selection(Environment_t env)
 
     for (int i=0; i<env.n; i++){
         for (int j=0; j<env.n; j++){
-            float score(1000000);
+            float score((env.repartition[i*env.n+j][0].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / ((env.conditions[i*env.n+j].parameters).norm()+float(0.0001)));
             int ind(0);
             
-            for (int k=0; k<env.repartition[i*env.n+j].size(); k++)
+            for (int k=1; k<env.repartition[i*env.n+j].size(); k++)
             {
                 if (((env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm()+env.persistency) / ((env.conditions[i*env.n+j].parameters).norm()+float(0.0001)) < score)
                 {
                     ind = k;
-                    score = ((env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm()+env.persistency) / ((env.conditions[i*env.n+j].parameters).norm()+float(0.0001));
+                    score = (env.repartition[i*env.n+j][k].niche.parameters - env.conditions[i*env.n+j].parameters).norm() / ((env.conditions[i*env.n+j].parameters).norm()+float(0.0001));
                 }
             }
             
@@ -162,13 +162,13 @@ Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot, stri
     {
         tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  repartitionPixels = repartitionToPixel(environment);
         tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  changePixels = changeToPixel(environment.numberOfChanges);
-        tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  envPixels = envToPixel(environment.conditions, 0);
+        tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  envPixels = envToPixel(environment.conditions, dimension);
 
         imagePlot(repartitionPixels, 0, environment.name+"repartition.png", environment.n);
         imagePlot(changePixels, 0, environment.name + "numberChange.png", environment.n);
         imagePlot(envPixels, 0, environment.name + "environment dimension "+to_string(dimension)+".png", environment.n);
 
-        mergeImage(environment.name + "environment dimension "+to_string(dimension)+".png", environment.name+"repartition.png", environment.name + "numberChange.png", "env_rep_change_t=0.png");
+        mergeImage(environment.name + "environment dimension "+to_string(dimension)+".png", environment.name+"repartition.png", environment.name + "numberChange.png", environment.name+"merged_t=0.png");
     }
 
     for (int i=1; i<nIter; i++)
@@ -194,9 +194,9 @@ Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot, stri
             imagePlot(changePixels, i, changeFile, environment.n);
             imagePlot(envPixels, i, envFile, environment.n);
 
-            mergeImage(envFile, repFile, changeFile, "env_rep_change_t="+to_string(i)+".png");
+            mergeImage(envFile, repFile, changeFile, environment.name+"_merged="+to_string(i)+".png");
         }
-        else {cout << environment << endl;}
+        else if (plot==false) {}//cout << environment << endl;}
     }
 }
 
