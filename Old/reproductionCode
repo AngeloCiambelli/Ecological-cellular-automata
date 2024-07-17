@@ -1,0 +1,26 @@
+//Aleatory reproduction of species in each node of the grid chosing two parent species
+Environment_t reproduction(Environment_t env, float fecondity)
+{   
+    for (int i=0; i<env.n; i++){
+        for (int j=0; j<env.n; j++){
+            random_device rd;
+            mt19937 gen(rd());
+            bernoulli_distribution infant(fecondity);
+            if (infant(gen)==true)
+            {
+                uniform_int_distribution<int> parentDistribution{  0, (env.repartition[i*env.n+j]).size()-1};
+                Specie parent1(env.repartition[i*env.n+j][parentDistribution(gen)]);
+                Specie parent2(env.repartition[i*env.n+j][parentDistribution(gen)]);
+
+                //Ceck if specie already exist in the species list, if not add it
+                if ((std::find(env.species.begin(), env.species.end(), mean(parent1,parent2)) != env.species.end())==false)
+                {
+                    env.species.push_back(mean(parent1,parent2));
+                }
+                env.repartition[i*env.n+j].push_back(mean(parent1,parent2));
+            }  
+        }
+    }
+    return env;
+}
+

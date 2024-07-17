@@ -18,111 +18,6 @@
 
 using namespace std;
 
-//Convert the repartition to a pixel array
-tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(Environment_t env){
-
-    //Create the color palette
-    Vecteur<Vecteur<int>> colorMap(env.species.size(), Vecteur<int> ({0, 0, 0, 255}));
-    for(int i=0 ; i<env.species.size(); i++)
-    {
-        if (i==0){colorMap[i][0]=100; colorMap[i][1]=175; colorMap[i][2]=50;}
-        else if (i==1){colorMap[i][0]=225; colorMap[i][1]=216; colorMap[i][2]=75;}
-        else if (i!=0 & i!=1){
-            colorMap[i][2]=floor((i+1)*255/env.species.size());
-        }
-    }
-
-    //Fill in a pixel array with the corresponding colormap
-    Vecteur<Vecteur<int>> pixelArray(env.n*env.n, Vecteur<int> ({0, 0, 0, 255}));
-
-    for (int i=0; i<env.n; i++){
-        for (int j=0; j<env.n; j++){
-            if (env.repartition[i*env.n+j].size()!=0){
-                int k = (find(env.species.begin(), env.species.end(), (env.repartition[i*env.n+j][0])) - env.species.begin());
-                pixelArray[i*env.n+j][0] = colorMap[k][0];
-                pixelArray[i*env.n+j][1] = colorMap[k][1];
-                pixelArray[i*env.n+j][2] = colorMap[k][2];
-            }   
-        }
-    }
-
-    //Convert the pixel array to an sf::Uint8 array
-    sf::Uint8* pixels = new sf::Uint8[env.n * env.n * 4];
-    for (unsigned int i = 0; i < env.n * env.n; ++i) {
-        pixels[i * 4] = pixelArray[i][0];     // Red
-        pixels[i * 4 + 1] = pixelArray[i][1]; // Green
-        pixels[i * 4 + 2] = pixelArray[i][2]; // Blue
-        pixels[i * 4 + 3] = pixelArray[i][3]; // Alpha
-    }
-    
-    return(tuple<sf::Uint8*, string, string, sf::Color, sf::Color> (pixels, env.species[0].name, env.species[env.species.size()-1].name, sf::Color(colorMap[0][0],colorMap[0][1],colorMap[0][2],colorMap[0][3]), sf::Color(colorMap[colorMap.size()-1][0], colorMap[colorMap.size()-1][1], colorMap[colorMap.size()-1][2], colorMap[colorMap.size()-1][3])));
-}
-
-//Convert the vectors to a pixel array
-template<typename T1>
-tuple<sf::Uint8*, string, string, sf::Color, sf::Color> changeToPixel(vector<T1> x){
-
-    //Fill the with intensity depending on the value of x[i]
-    Vecteur<Vecteur<int>> pixelArray(x.size(), Vecteur<int> ({255, 255, 255, 255}));
-
-    //Get the maximum of x to handle intensity levels
-    float xMax = *max_element(x.begin(), x.end());
-    float xMin = *min_element(x.begin(), x.end());
-
-    //Fill the pixel array
-    for (int i=0; i<x.size(); i++){
-        pixelArray[i][1] = (1-x[i]/xMax) * 255;
-        pixelArray[i][2] = (1-x[i]/xMax) * 255;
-    }
-
-    //Convert the pixel array to an sf::Uint8 array
-    sf::Uint8* pixels = new sf::Uint8[x.size() * 4];
-    for (unsigned int i = 0; i < x.size(); ++i) {
-        pixels[i * 4] = pixelArray[i][0];     // Red
-        pixels[i * 4 + 1] = pixelArray[i][1]; // Green
-        pixels[i * 4 + 2] = pixelArray[i][2]; // Blue
-        pixels[i * 4 + 3] = pixelArray[i][3]; // Alpha
-    }
-    
-    return(tuple<sf::Uint8*, string, string, sf::Color, sf::Color> (pixels, to_string(xMin), to_string(xMax), sf::Color(255, 255, 255, 255), sf::Color(255, 0, 0, 255)));
-}
-
-//Convert the environmental conditions to a pixel array
-tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(vector<VariableEnv<Vecteur<float>>> x, int dimension){
-
-    //Fill the with intensity depending on the value of x[i]
-    Vecteur<Vecteur<int>> pixelArray(x.size(), Vecteur<int> ({255, 255, 255, 255}));
-
-    //Get the maximum and minimum of x to handle intensity levels
-    float xMax(-10000);
-    float xMin(10000);
-    for (int i=0; i<x.size(); i++){
-        if ((x[i].parameters)[dimension] < xMin){
-            xMin = (x[i].parameters)[dimension];
-        }
-        if ((x[i].parameters)[dimension] > xMax){
-            xMax = (x[i].parameters)[dimension];
-        }
-    }
-
-    //Fill the pixel array
-    for (int i=0; i<x.size(); i++){
-        pixelArray[i][1] = (1-abs(x[i].parameters[dimension]-xMin)/abs(xMax-xMin)) * 255;
-        pixelArray[i][2] = (1-abs(x[i].parameters[dimension]-xMin)/abs(xMax-xMin)) * 255;
-    }
-
-    //Convert the pixel array to an sf::Uint8 array
-    sf::Uint8* pixels = new sf::Uint8[x.size() * 4];
-    for (unsigned int i = 0; i < x.size(); ++i) {
-        pixels[i * 4] = pixelArray[i][0];     // Red
-        pixels[i * 4 + 1] = pixelArray[i][1]; // Green
-        pixels[i * 4 + 2] = pixelArray[i][2]; // Blue
-        pixels[i * 4 + 3] = pixelArray[i][3]; // Alpha
-    }
-    
-    return(tuple<sf::Uint8*, string, string, sf::Color, sf::Color> (pixels, to_string(xMin), to_string(xMax), sf::Color(255, 255, 255, 255), sf::Color(255, 0, 0, 255)));
-}
-
 //Add a legend to the image
 void addLegend(sf::RenderTarget& target, const std::string& legendText, sf::Font& font, unsigned int imageHeight, unsigned int imageWidth) 
 {
@@ -286,7 +181,6 @@ void mergeImage(string image1, string image2, string image3, string finalFileNam
     //Save the combined image to a file
     combinedTexture.copyToImage().saveToFile(path+"output/images/ "+ finalFileName);
 }
-
 
 //Make a grid image 
 void gridPlot(std::tuple<sf::Uint8*, std::string, std::string, sf::Color, sf::Color> pixels, sf::RenderTarget& envRender, int n, int i, 

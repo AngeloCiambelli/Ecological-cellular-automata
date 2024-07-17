@@ -25,7 +25,9 @@ public:
     Specie(){};
 
     //Member functions
-    bool operator==(const Specie &B);
+
+    //Operators
+    bool operator==(const Specie &B) const {return(this->name==B.name);}
 };
 
 //======================================================================
@@ -37,11 +39,6 @@ Specie::Specie(VariableEnv<Vecteur<float>>& v, string specie, int speed)
     niche=v;
     diffusion_speed=speed;
     name=specie;
-}
-
-bool Specie::operator==(const Specie &B)
-{
-    return((*this).name==B.name);
 }
 
 //======================================================================

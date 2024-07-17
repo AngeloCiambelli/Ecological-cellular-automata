@@ -13,4 +13,4 @@ def movie(imageFolder, fps, title):
 
 
 #Make a movie
-movie("output/images", int(5), "output/videos/test")
+movie("output/images/Presentation", int(15), "output/videos/presentation")

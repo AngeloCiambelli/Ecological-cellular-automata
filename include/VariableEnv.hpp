@@ -24,10 +24,12 @@ class VariableEnv
     //Constructor of environmental object
     VariableEnv(const T& v){parameters=v;};
     VariableEnv(){};
-    VariableEnv<T>& operator=(const VariableEnv<T>& v)
-    {
+    VariableEnv<T>& operator=(const VariableEnv<T>& v){
         (*this).parameters=v.parameters;
         return (*this);
+    }
+    bool operator ==(VariableEnv v){
+        return(this->parameters==v.parameters);
     }
 };
 

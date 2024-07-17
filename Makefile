@@ -1,4 +1,3 @@
-#
 # 'make'        build executable file 'main'
 # 'make clean'  removes all .o and executable files
 #
@@ -12,7 +11,7 @@ CXXFLAGS := -std=c++17 -Wall -Wextra -g
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS =
+LFLAGS = 
 
 # define output directory
 OUTPUT := output
@@ -47,8 +46,14 @@ endif
 # define any directories containing header files other than /usr/include
 INCLUDES := $(patsubst %,-I%, $(INCLUDEDIRS:%/=%))
 
+# Add MathPlot++ and Python include directories
+INCLUDES += -I./matplotlib-cpp `python3-config --cflags`
+
 # define the C libs
 LIBS := $(patsubst %,-L%, $(LIBDIRS:%/=%)) -lsfml-graphics -lsfml-window -lsfml-system
+
+# Add Python libraries explicitly
+PYTHON_LIBS := `python3-config --ldflags` -lpython3.10 -lstdc++ -lm
 
 # define the C source files
 SOURCES := $(wildcard $(patsubst %,%/*.cpp, $(SOURCEDIRS)))
@@ -74,7 +79,7 @@ $(OUTPUT):
 	$(MD) $(OUTPUT)
 
 $(MAIN): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS) $(PYTHON_LIBS)
 
 # include all .d files
 -include $(DEPS)
@@ -97,5 +102,3 @@ clean:
 run: all
 	./$(OUTPUTMAIN)
 	@echo Executing 'run: all' complete!
-
-

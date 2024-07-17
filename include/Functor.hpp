@@ -38,16 +38,43 @@ public:
 class repFunctor
 {
 public:
-  vector<vector<Specie>>& operator()(vector<vector<Specie>>& rep, int n, vector<Specie> sp)
+  vector<vector<Specie>>& operator()(vector<vector<Specie>>& rep, int n, vector<Specie> sp, string gen)
   {
-    for (int i=0; i<n; i++){
-      for (int j=0; j<n; j++)
-      {
-        if (i==n-1) {rep[i*n+j].push_back(sp[0]);} //Alternated: i%2==1 
-        else {rep[i*n+j].push_back(sp[1]);}
-        //else if (i==3*(n-1)/4 /*& j==3*(n-1)/4*/){rep[i*n+j].push_back(sp[1]);}
+    if (gen == "bottomStart") {
+      for (int i=0; i<n; i++){
+        for (int j=0; j<n; j++)
+        {
+          if (i==n-1) {rep[i*n+j].push_back(sp[0]);} //Alternated: i%2==1 
+          else {rep[i*n+j].push_back(sp[1]);}
+          //else if (i==3*(n-1)/4 /*& j==3*(n-1)/4*/){rep[i*n+j].push_back(sp[1]);}
+        }
       }
     }
+
+    if (gen == "oppositeCornerStart") {
+      rep[(n-1)*n+(n-1)].push_back(sp[1]);
+      rep[0].push_back(sp[0]);
+    }
+
+    else if (gen == "pointStart") {
+      for (int i=0; i<n; i++){
+        for (int j=0; j<n; j++)
+        {
+          rep[i*n+j].push_back(sp[1]);
+        }
+      }
+
+      std::mt19937 rng(1); // Initialize random number generator with a seed to ensure reproduicability
+      std::uniform_int_distribution<int> dist(0, n-1);
+
+      for(int k=0; k<n; k++) {
+        int i = dist(rng);
+        int j = dist(rng);
+        rep[i*n+j].pop_back();
+        rep[i*n+j].push_back(sp[0]); 
+      }
+    }
+
     return(rep);
   }
 };
@@ -72,7 +99,7 @@ public:
         for (int j=0; j<parameters["n"]; j++)
         {
           std::random_device rd{};
-          std::mt19937 gen{rd()};
+          std::mt19937 gen{rd()}; //Using generation 32-bit Mersenne Twister by Matsumoto and Nishimura, 1998 (one of the best)
           normal_distribution<float> dist(parameters["distMean"],sqrt(parameters["distVar"]));
           env[i*parameters["n"]+j].parameters=Vecteur<float>({float(dist(gen))});  
         }

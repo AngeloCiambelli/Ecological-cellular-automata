@@ -258,4 +258,41 @@ Vecteur<T> operator/(const Vecteur<T> &u, const T &x)
   return nouveau;
 } // u / x
 
+template<typename T>
+Vecteur<T> operator*(const Vecteur<T> &u, const Vecteur<T> &v)
+{
+  int n = u.size();
+  Vecteur<T> nouveau(n);
+
+  if (n != v.size())
+  {
+    cout << "hop hop hop ils n'ont pas la meme taille tes vecteurs";
+    exit(1);
+  }
+
+  for (int i = 0; i < n; i++)
+  {
+    nouveau[i] = u[i] * v[i];
+  }
+  return nouveau;
+}
+
+template<typename T>
+Vecteur<T> operator/(const Vecteur<T> &u, const Vecteur<T> &v)
+{
+  int n = u.size();
+  Vecteur<T> nouveau(n);
+
+  if (n != v.size())
+  {
+    cout << "hop hop hop ils n'ont pas la meme taille tes vecteurs";
+    exit(1);
+  }
+
+  for (int i = 0; i < n; i++)
+  {
+    nouveau[i] = u[i] / v[i];
+  }
+  return nouveau;
+}
 #endif
