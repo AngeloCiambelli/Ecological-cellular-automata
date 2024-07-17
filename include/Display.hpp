@@ -91,21 +91,21 @@ void addColorBar(sf::RenderTarget& target, unsigned int imageHeight, unsigned in
 }
 
 //Save an image
-void imagePlot(tuple<sf::Uint8*, string, string, sf::Color, sf::Color> pixels, int t, const std::string& filename, int n) 
+void imagePlot(tuple<sf::Uint8*, string, string, sf::Color, sf::Color> pixels, int t, const std::string& filename, int m, int n) 
 {
     //Working directory
     std::string path = "/home/angelo/Documents/Master/MasterMaths/MesProjets/Network_diffusion/";
 
     //Create an SFML texture and sprite from the pixel array
     sf::Texture texture;
-    texture.create(n, n);
+    texture.create(n, m);
     texture.update(get<0>(pixels));
     sf::Sprite sprite;
     sprite.setTexture(texture);
 
     //Create an SFML render texture to draw everything, including extra space for the legend
     sf::RenderTexture renderTexture;
-    if (!renderTexture.create(n, n + 100)) {
+    if (!renderTexture.create(n, m + 100)) {
         delete[] get<0>(pixels);
         return; // Error creating render texture
     }
@@ -123,10 +123,10 @@ void imagePlot(tuple<sf::Uint8*, string, string, sf::Color, sf::Color> pixels, i
 
     //Create and add the title and legend
     std::string legendText = " " + filename;
-    addLegend(renderTexture, legendText, font, n, n);
+    addLegend(renderTexture, legendText, font, m, n);
 
     //Add the color bar legend
-    addColorBar(renderTexture, n, n, font, get<1>(pixels), get<2>(pixels), get<3>(pixels), get<4>(pixels));
+    addColorBar(renderTexture, m, n, font, get<1>(pixels), get<2>(pixels), get<3>(pixels), get<4>(pixels));
 
     //Display the result and save to a file
     renderTexture.display();
@@ -183,7 +183,7 @@ void mergeImage(string image1, string image2, string image3, string finalFileNam
 }
 
 //Make a grid image 
-void gridPlot(std::tuple<sf::Uint8*, std::string, std::string, sf::Color, sf::Color> pixels, sf::RenderTarget& envRender, int n, int i, 
+void gridPlot(std::tuple<sf::Uint8*, std::string, std::string, sf::Color, sf::Color> pixels, sf::RenderTarget& envRender, int m, int n, int i, 
               int j, int padding, float pVal1, float pVal2, std::string pName1="Parameter1", std::string pName2="Parameter2") 
     {
     // Working directory
@@ -191,14 +191,14 @@ void gridPlot(std::tuple<sf::Uint8*, std::string, std::string, sf::Color, sf::Co
 
     // Create an SFML texture from the pixel array and update it
     sf::Texture texture;
-    texture.create(n, n);
+    texture.create(n, m);
     texture.update(std::get<0>(pixels));
 
     // Create a sprite to draw the texture onto the render texture
     sf::Sprite sprite(texture);
 
     // Calculate the position of the texture within the render texture
-    sprite.setPosition(i*n+(i+1)*padding, j*n+(j+1)*padding);
+    sprite.setPosition(i*n+(i+1)*padding, j*m+(j+1)*padding);
     
     // Start drawing on the render texture
     envRender.draw(sprite);
@@ -231,11 +231,11 @@ void gridPlot(std::tuple<sf::Uint8*, std::string, std::string, sf::Color, sf::Co
         sf::Text legendText2(pName2 + ":\n" + valStream2.str(), font, 10);
         legendText2.setFillColor(sf::Color::Black);
         legendText2.setCharacterSize(14); // Adjust the size as needed
-        legendText2.setPosition(padding/4, padding + n / 2);
+        legendText2.setPosition(padding/4, padding + m / 2);
         envRender.draw(legendText2);
     } else if (i == 0 && j != 0) {
         legendTextObj.setString(valStream2.str());
-        legendTextObj.setPosition(padding/4, j * (padding + n) + padding + n/ 2);
+        legendTextObj.setPosition(padding/4, j * (padding + n) + padding + m/ 2);
         envRender.draw(legendTextObj);
     } else if (i != 0 && j == 0) {
         legendTextObj.setString(valStream1.str());

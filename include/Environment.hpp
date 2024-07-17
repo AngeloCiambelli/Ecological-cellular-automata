@@ -25,7 +25,8 @@ using namespace std;
 class Environment_t
 {
     public :
-        int n;                                                    //Size of the lattice
+        int n;                                                    //Number of columns of the lattice
+        int m;                                                    //Number of rows of the lattice
         float unit;                                               //Unit of the lattice
         float envDilatation;                                      //Parameter of dilatation to set or change the environment
         float envDelay;                                           //Parameter of delay to set or change the environment
@@ -42,6 +43,7 @@ class Environment_t
         //Constructors
         Environment_t(){};                                                                                                    //Empty constructor
         Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string GenType, string repType);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
+        Environment_t(const sf::Image& image, vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType); //Constructor of an environment matrix using image for environmental conditions
         
         //Member functions
         Environment_t migration();
@@ -112,15 +114,16 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(Envir
     {
         if (i==0){colorMap[i][0]=100; colorMap[i][1]=175; colorMap[i][2]=50;}
         else if (i==1){colorMap[i][0]=225; colorMap[i][1]=216; colorMap[i][2]=75;}
+        else if (i==2){colorMap[i][0]=150; colorMap[i][1]=175; colorMap[i][2]=100;} //To comment if we want to look at infant
         else if (i!=0 & i!=1){
             colorMap[i][2]=floor((i+1)*255/env.species.size());
         }
     }
 
     //Fill in a pixel array with the corresponding colormap
-    Vecteur<Vecteur<int>> pixelArray(env.n*env.n, Vecteur<int> ({0, 0, 0, 255}));
+    Vecteur<Vecteur<int>> pixelArray(env.m*env.n, Vecteur<int> ({0, 0, 0, 255}));
 
-    for (int i=0; i<env.n; i++){
+    for (int i=0; i<env.m; i++){
         for (int j=0; j<env.n; j++){
             if (env.repartition[i*env.n+j].size()!=0){
                 int k = (find(env.species.begin(), env.species.end(), (env.repartition[i*env.n+j][0])) - env.species.begin());
@@ -132,8 +135,8 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(Envir
     }
 
     //Convert the pixel array to an sf::Uint8 array
-    sf::Uint8* pixels = new sf::Uint8[env.n * env.n * 4];
-    for (unsigned int i = 0; i < env.n * env.n; ++i) {
+    sf::Uint8* pixels = new sf::Uint8[env.m * env.n * 4];
+    for (unsigned int i = 0; i < env.m * env.n; ++i) {
         pixels[i * 4] = pixelArray[i][0];     // Red
         pixels[i * 4 + 1] = pixelArray[i][1]; // Green
         pixels[i * 4 + 2] = pixelArray[i][2]; // Blue
@@ -214,11 +217,12 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(vector<Variab
 //======================================================================
 
 //float unitEnv, int m, float a, float b,
-//Constructor
-Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType) : numberOfChanges(int(parameters["n"]*parameters["n"]), 0)
+//Constructor from functors only
+Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType) : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
-    n = parameters["n"];                  
+    n = parameters["n"];    
+    m = parameters["m"];               
     if (parameters.find("unit") != parameters.end()){envDilatation = parameters["unit"];} 
     if (parameters.find("envDilatation") != parameters.end()){envDilatation = parameters["envDilatation"];}        
     if (parameters.find("envDelay") != parameters.end()){envDelay = parameters["envDelay"];}
@@ -227,7 +231,7 @@ Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, st
     if (parameters.find("persistency") != parameters.end()){persistency = parameters["persistency"];}  
 
     //Construction of the environmental matrix
-    conditions.resize(n*n);
+    conditions.resize(m*n);
     envFunctor intialEnv; 
     intialEnv(conditions, parameters, genType);
 
@@ -235,9 +239,39 @@ Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, st
     species = sp;
 
     //Construction of the intial repartition
-    repartition.resize(n*n);
+    repartition.resize(m*n);
     repFunctor initialRep;
-    initialRep(repartition, n, sp, repType);
+    initialRep(repartition, m, n, sp, repType);
+
+    //Add the parameters and species used in the name of the environment
+    name = makeName(filename, parameters, sp);
+}
+
+//Constructor from functors and image to set environmental parameters
+Environment_t::Environment_t(const sf::Image& image, vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType) : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+{   
+    //Extract the parameters
+    n = parameters["n"];    
+    m = parameters["m"];
+    if (parameters.find("unit") != parameters.end()){envDilatation = parameters["unit"];} 
+    if (parameters.find("envDilatation") != parameters.end()){envDilatation = parameters["envDilatation"];}        
+    if (parameters.find("envDelay") != parameters.end()){envDelay = parameters["envDelay"];}
+    if (parameters.find("distMean") != parameters.end()){distMean = parameters["distMean"];} 
+    if (parameters.find("distVar") != parameters.end()){distVar = parameters["distVar"];}
+    if (parameters.find("persistency") != parameters.end()){persistency = parameters["persistency"];} 
+
+    //Construction of the environmental matrix
+    conditions.resize(m*n);
+    envFunctor intialEnv; 
+    intialEnv(conditions, m, n, image);
+
+    //Species
+    species = sp;
+
+    //Construction of the intial repartition
+    repartition.resize(m*n);
+    repFunctor initialRep;
+    initialRep(repartition, m, n, sp, repType);
 
     //Add the parameters and species used in the name of the environment
     name = makeName(filename, parameters, sp);
@@ -249,13 +283,13 @@ Environment_t Environment_t::migration()
     //New environment
     Environment_t newEnv(*this);
 
-    for (int i=0; i<this->n; i++){
+    for (int i=0; i<this->m; i++){
         for (int j=0; j<this->n; j++){
             if (this->repartition[i*this->n+j].size()!=0)
             {
                 for (int k=0; k<=(this->repartition[i*this->n+j][0]).diffusion_speed; k++){
                     for (int l=0; l<=(this->repartition[i*this->n+j][0]).diffusion_speed-k; l++){
-                        if ((i+l < this->n) and (j+k < this->n))
+                        if ((i+l < this->m) and (j+k < this->n))
                         {
                         newEnv.repartition[(i+l)*this->n+k+j].push_back(this->repartition[i*this->n+j][0]);
                         }
@@ -263,7 +297,7 @@ Environment_t Environment_t::migration()
                         {
                         newEnv.repartition[(i-l)*this->n-k+j].push_back(this->repartition[i*this->n+j][0]);
                         }
-                        if ((i+l < this->n) and (j-k >= 0))
+                        if ((i+l < this->m) and (j-k >= 0))
                         {
                         newEnv.repartition[(i+l)*this->n-k+j].push_back(this->repartition[i*this->n+j][0]);
                         }
@@ -286,7 +320,7 @@ Environment_t Environment_t::selection(){
     //New environment
     Environment_t newEnv(*this);
 
-    for (int i=0; i<this->n; i++){
+    for (int i=0; i<this->m; i++){
         for (int j=0; j<this->n; j++){
             if (this->repartition[i*this->n+j].size()!=0){
                 float score((this->repartition[i*this->n+j][0].niche.parameters - this->conditions[i*this->n+j].parameters).norm() / ((this->conditions[i*this->n+j].parameters).norm()+float(0.0001)));
@@ -319,10 +353,10 @@ Environment_t Environment_t::selection(){
 
 //Change in the environment according to the functor : f_t(conditions)
 Environment_t Environment_t::environmentalChange(float t){   
-    for (int i=0; i<this->n; i++){
+    for (int i=0; i<this->m; i++){
         for (int j=0; j<this->n; j++){
             envChangeFunctor f;
-            this->conditions[i*this->n+j] = f(this->unit, i, j, this->n, t, this->envDilatation, this->envDelay);
+            this->conditions[i*this->n+j] = f(this->unit, i, j, this->m, this->n, t, this->envDilatation, this->envDelay);
         }
     }
     return *this;
@@ -331,7 +365,7 @@ Environment_t Environment_t::environmentalChange(float t){
 //Count the number of individuals in each populations
 Vecteur<float> Environment_t::countPopulations(){
     Vecteur<float> counts(this->species.size(),0);
-    for (int i=0; i<this->n; i++){
+    for (int i=0; i<this->m; i++){
         for (int j=0; j<this->n; j++){
             if (this->repartition[i*this->n+j].size()!=0){
                 counts[int(find(this->species.begin(), this->species.end(), (this->repartition[i*this->n+j][0])) - this->species.begin())]+=1;
@@ -347,9 +381,9 @@ void Environment_t::display(string type, int envDimension){
     tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  changePixels = changeToPixel(this->numberOfChanges);
     tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  envPixels = envToPixel(this->conditions, envDimension);
 
-    imagePlot(repartitionPixels, 0, this->name+"repartition.png", this->n);
-    imagePlot(changePixels, 0, this->name + "numberChange.png", this->n);
-    imagePlot(envPixels, 0, this->name + "environment dimension "+to_string(envDimension)+".png", this->n);
+    imagePlot(repartitionPixels, 0, this->name+"repartition.png", this->m, this->n);
+    imagePlot(changePixels, 0, this->name + "numberChange.png", this->m, this->n);
+    imagePlot(envPixels, 0, this->name + "environment dimension "+to_string(envDimension)+".png", this->m, this->n);
 
     mergeImage(this->name + "environment dimension "+to_string(envDimension)+".png", this->name+"repartition.png", this->name + "numberChange.png", this->name+"merged_t=0.png");
 }
@@ -368,9 +402,9 @@ void Environment_t::display(string type, int envDimension, int i){
     string envFile = this->name + "environment dimension " + to_string(envDimension) +"\n t=" + to_string(i) + ".png";
 
     //Save image
-    imagePlot(repartitionPixels, i, repFile, this->n);
-    imagePlot(changePixels, i, changeFile, this->n);
-    imagePlot(envPixels, i, envFile, this->n);
+    imagePlot(repartitionPixels, i, repFile, this->m, this->n);
+    imagePlot(changePixels, i, changeFile, this->m, this->n);
+    imagePlot(envPixels, i, envFile, this->m, this->n);
 
     mergeImage(envFile, repFile, changeFile, this->name+"_merged="+to_string(i)+".png");
 }

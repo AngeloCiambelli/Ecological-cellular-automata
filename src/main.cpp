@@ -14,33 +14,45 @@ namespace plt = matplotlibcpp;
 int main(int argc, char *argv[])
 {
     map<string, float> parameters;
-    parameters["n"] = 200;                  //Size of the lattice
+    parameters["n"] = 200;                  //Number of columns of the lattice
+    parameters["m"] = 1;                  //Number of rows of the lattice
     //parameters["unit"] = 0.1;             //Unit of the square (to simplify function use)
     //parameters["envDilatation"] = 5;      //Oscillation parameter
     //parameters["envDelay"] = 0;           //Speed of the travelling wave
     parameters["persistency"] = 0;          //Persistency of the species
     parameters["distMean"] = 0.5;           //Mean of species niche, mean of the distribution used for environment generation
     parameters["distVar"] = 0.5;            //Variance of the distribution used for environment generation
-    int nIter=400;                          //Number of iteration in the simulation
+    int nIter=60;                          //Number of iteration in the simulation
     bool plot = true;                       //If you want to plot the results
 
     //Define the generic filename
     string filename="heterogenous=NormalDist \n constant \n ";
 
     //Creation of the species' niches
-    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({1}));
-    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({0}));
+    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({68, 1, 84}));
+    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({253, 231, 37}));
+    VariableEnv<Vecteur<float>> niche_C(Vecteur<float>({32, 144, 140}));
+    VariableEnv<Vecteur<float>> niche_D(Vecteur<float>({0, 0, 0}));
 
     //Creation of the species
     Specie A(niche_A,"A", 2);
     Specie B(niche_B,"B", 2);
+    Specie C(niche_C,"C", 2);
+    Specie D(niche_D,"D", 2);
 
     //Creation of the species list
-    vector<Specie> spVector({A, B});
+    vector<Specie> spVector({A, B, C, D});
 
-    
+    //Load environmental image
+    sf::Image image;
+    image.loadFromFile("include/pyrenees_relief_map_resized.jpg"); //Image from open-topography copernicus 30m resolution resized to lesser pixels. 
+    sf::Vector2u size = image.getSize();
+    parameters["n"] = size.x;
+    parameters["m"] = size.y;  
+
     //Creation of the environment
-    Environment_t E(spVector, parameters, filename, "random", "oppositeCornerStart");
+    //Environment_t E(spVector, parameters, filename, "random", "oppositeCornerStart"); //Env from functor only
+    Environment_t E(image, spVector, parameters, filename, "random", "pointStart"); //Env from image and functors
 
     //Running simulation
     Simulation automate(E, nIter, plot);
@@ -49,19 +61,36 @@ int main(int argc, char *argv[])
     cout << automate.countVector << endl;
     cout << automate.timeBeforeStationarity << endl;
 
-    Vecteur<float> x; for (int i=0; i<nIter; i++){x.push_back(i);}
-    plt::plot(x, automate.countVector[0]/(parameters["n"]*parameters["n"]));
+    Vecteur<float> t; for (int i=0; i<nIter; i++){t.push_back(i);}
+    plt::plot(t, automate.countVector[0]/(parameters["m"]*parameters["n"]));
     plt::title("Proportion of the specie A (#square A/# tot square)");
     plt::legend();
     plt::savefig("output/images/popSizes.pdf");
-    
+    plt::clf();
+
     /*
+    //Convert repartiton of species into a labelled array for display
+    Vecteur<int> labels({1,2});
+    Vecteur<int> repartitionLabeled({});
+    for (int i=0; i<parameters["n"]; i++)
+    {
+        if (automate.environment.repartition[i][0].name=="A"){repartitionLabeled.push_back(labels[0]);}
+        else {repartitionLabeled.push_back(labels[1]);}
+    }
+
+    Vecteur<float> x; for (int i=0; i<parameters["n"]; i++){x.push_back(i);}
+    plt::scatter(x, repartitionLabeled);
+    plt::title("A distribution");
+    plt::legend();
+    plt::savefig("output/images/rep_scatter.pdf");
+    plt::clf();
+    
+    
     //Input
     int nReplicate = 1;//20;
     vector<float> means({0.5}); //{0.3,0.4,0.5,0.55,0.56,0.57,0.58,0.59,0.6,0.7,0.8,0.9}
     vector<float> variances({0.5});
     vector<float> persistencies({0});
-    Vecteur<float> x; for (int i=0; i<nIter; i++){x.push_back(i);}
     int padding = 50;
     
     //output
@@ -89,6 +118,7 @@ int main(int argc, char *argv[])
                     //Creation of the environment
                     map<string, float> param;
                     param["n"] = parameters["n"];
+                    param["m"] = parameters["m"];
                     param["distMean"] =  means[i];
                     param["distVar"] = variances[j];
                     param["persistency"] = persistencies[k];
@@ -101,13 +131,13 @@ int main(int argc, char *argv[])
 
                     //Plot the final repartition
                     tuple<sf::Uint8*, string, string, sf::Color, sf::Color> rep = repartitionToPixel(automate.environment);
-                    gridPlot(rep, envRender, automate.environment.n, i, j, padding, means[i], variances[j], "Mean", "Var");
+                    gridPlot(rep, envRender, automate.environment.m, automate.environment.n, i, j, padding, means[i], variances[j], "Mean", "Var");
 
                     //Keep memory of the migration end
                     replicateEndMigration.push_back(automate.timeBeforeStationarity);
 
                     //Do one curve
-                    replicatePopSize.push_back(automate.countVector[0]/float(parameters["n"]*parameters["n"]));
+                    replicatePopSize.push_back(automate.countVector[0]/float(parameters["m"]*parameters["n"]));
                 }
                 cout << "column " << i << " finished \n";
             }
@@ -147,7 +177,7 @@ int main(int argc, char *argv[])
 
     //Plot the curves invaderProp vs Mean
     for (int i=0; i<means.size();i++){
-        plt::errorbar(x, popSizeMean[i], popSizeStdDev[i],{{"label", "mean="+to_string(means[i])}});
+        plt::errorbar(t, popSizeMean[i], popSizeStdDev[i],{{"label", "mean="+to_string(means[i])}});
     }
     plt::title("Proportion of A wrt time for different generation mean and a variance of 0.1 and a persistency of 0.");
     plt::legend();
