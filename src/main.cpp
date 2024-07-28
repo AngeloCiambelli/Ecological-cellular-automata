@@ -13,58 +13,81 @@ namespace plt = matplotlibcpp;
 
 int main(int argc, char *argv[])
 {
+    //Load environmental image
+    sf::Image depthImage;
+    sf::Image vegetationImage;
+    depthImage.loadFromFile("include/roscoff_rocky_beach.png"); //Carefull with image size...
+    vegetationImage.loadFromFile("include/vegetation_cover.png");
+    sf::Vector2u size = depthImage.getSize();
+    sf::Vector2u sizeVege = vegetationImage.getSize();
+    if(size.x != sizeVege.x | size.y != sizeVege.y){cout << "image size don't match \n"; exit(1);} //Check before if the two images have the same size
+
     map<string, float> parameters;
-    parameters["n"] = 200;                  //Number of columns of the lattice
-    parameters["m"] = 1;                  //Number of rows of the lattice
+    parameters["n"] = size.x;               //Number of columns of the lattice
+    parameters["m"] = size.y;               //Number of rows of the lattice
     //parameters["unit"] = 0.1;             //Unit of the square (to simplify function use)
     //parameters["envDilatation"] = 5;      //Oscillation parameter
     //parameters["envDelay"] = 0;           //Speed of the travelling wave
     parameters["persistency"] = 0;          //Persistency of the species
     parameters["distMean"] = 0.5;           //Mean of species niche, mean of the distribution used for environment generation
     parameters["distVar"] = 0.5;            //Variance of the distribution used for environment generation
-    int nIter=60;                          //Number of iteration in the simulation
+    int nIter = 60;                         //Number of iteration in the simulation
     bool plot = true;                       //If you want to plot the results
+    string envGeneration = "random";        //Method to generate the environnement : "random", "function"
+    string initialRepartition = "pointStart"; //Method to initialize the species repartition : "bottomStart", "oppositeCornerStart", "pointStart"
+    string envType = "constant";            //Type of the environment : "constant", "variable"
 
     //Define the generic filename
-    string filename="heterogenous=NormalDist \n constant \n ";
-
+    string filename="heterogenous=NormalDist \n "+envType+"\n ";
+    
+    /*
     //Creation of the species' niches
-    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({68, 1, 84}));
-    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({253, 231, 37}));
-    VariableEnv<Vecteur<float>> niche_C(Vecteur<float>({32, 144, 140}));
-    VariableEnv<Vecteur<float>> niche_D(Vecteur<float>({0, 0, 0}));
+    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({75}));//
+    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({125}));
+    VariableEnv<Vecteur<float>> niche_C(Vecteur<float>({255}));
+    VariableEnv<Vecteur<float>> niche_D(Vecteur<float>({0}));
 
-    //Creation of the species
-    Specie A(niche_A,"A", 2);
-    Specie B(niche_B,"B", 2);
-    Specie C(niche_C,"C", 2);
-    Specie D(niche_D,"D", 2);
+    Vecteur<Vecteur<float>> tol_A({Vecteur<float>({50})});//
+    Vecteur<Vecteur<float>> tol_B({Vecteur<float>({100})});
+    Vecteur<Vecteur<float>> tol_C({Vecteur<float>({1})});
+    Vecteur<Vecteur<float>> tol_D({Vecteur<float>({1})});
+    */
+
+    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({75, 39}));//Perforatus
+    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({125, 255}));//Chthamalus
+    VariableEnv<Vecteur<float>> niche_C(Vecteur<float>({255, 255}));//Mask
+    VariableEnv<Vecteur<float>> niche_D(Vecteur<float>({0, 255}));//Mask
+
+    Vecteur<Vecteur<float>> tol_A({Vecteur<float>({50, 75}), Vecteur<float>({0, 200})});//
+    Vecteur<Vecteur<float>> tol_B({Vecteur<float>({100, 0}), Vecteur<float>({0, 255})});
+    Vecteur<Vecteur<float>> tol_C({Vecteur<float>({1, 0}), Vecteur<float>({0, 255})});
+    Vecteur<Vecteur<float>> tol_D({Vecteur<float>({1, 0}), Vecteur<float>({0, 255})});
+
+    //Creation of the species*/
+    Specie A(niche_A,"A", 2, tol_A);
+    Specie B(niche_B,"B", 2, tol_B);
+    Specie C(niche_C,"C", 2, tol_C);
+    Specie D(niche_D,"D", 2, tol_D);
 
     //Creation of the species list
-    vector<Specie> spVector({A, B, C, D});
-
-    //Load environmental image
-    sf::Image image;
-    image.loadFromFile("include/pyrenees_relief_map_resized.jpg"); //Image from open-topography copernicus 30m resolution resized to lesser pixels. 
-    sf::Vector2u size = image.getSize();
-    parameters["n"] = size.x;
-    parameters["m"] = size.y;  
+    vector<Specie> spVector({A, B, C, D});  
 
     //Creation of the environment
-    //Environment_t E(spVector, parameters, filename, "random", "oppositeCornerStart"); //Env from functor only
-    Environment_t E(image, spVector, parameters, filename, "random", "pointStart"); //Env from image and functors
+    //Environment_t E(spVector, parameters, filename, envGeneration, initialRepartition, envType); //Env from functors only
+    Environment_t E(depthImage, vegetationImage, spVector, parameters, filename, initialRepartition, envType);           //Env from image and functors
+    //Environment_t E(depthImage, spVector, parameters, filename, initialRepartition, envType); 
 
     //Running simulation
     Simulation automate(E, nIter, plot);
 
     //Display   
-    cout << automate.countVector << endl;
+    cout << automate.countVector[0].size() << endl;
     cout << automate.timeBeforeStationarity << endl;
 
-    Vecteur<float> t; for (int i=0; i<nIter; i++){t.push_back(i);}
+    Vecteur<float> t; for (int i=0; i<automate.timeBeforeStationarity+2; i++){t.push_back(i);}
     plt::plot(t, automate.countVector[0]/(parameters["m"]*parameters["n"]));
     plt::title("Proportion of the specie A (#square A/# tot square)");
-    plt::legend();
+    //plt::legend();
     plt::savefig("output/images/popSizes.pdf");
     plt::clf();
 

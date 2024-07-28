@@ -16,12 +16,13 @@ using namespace std;
 class Specie
 {
 public:
-    string name;                    //Name of the specie
-    VariableEnv<Vecteur<float>> niche;           //Optimal growing conditions
-    int diffusion_speed;            //Number of case travelled per iterations during diffusion
+    string name;                            //Name of the specie
+    VariableEnv<Vecteur<float>> niche;      //Optimal growing conditions
+    int diffusion_speed;                    //Number of case travelled per iterations during diffusion
+    Vecteur<Vecteur<float>> tolerance;                //Tolerance matrix of the specie
 
     //Constructors
-    Specie(VariableEnv<Vecteur<float>>& v, string specie, int speed);
+    Specie(VariableEnv<Vecteur<float>>& v, string specie, int speed, Vecteur<Vecteur<float>> tol);
     Specie(){};
 
     //Member functions
@@ -34,11 +35,12 @@ public:
 // Member functions
 //======================================================================
 
-Specie::Specie(VariableEnv<Vecteur<float>>& v, string specie, int speed)
+Specie::Specie(VariableEnv<Vecteur<float>>& v, string specie, int speed, Vecteur<Vecteur<float>> tol)
 {
     niche=v;
     diffusion_speed=speed;
     name=specie;
+    tolerance = tol;
 }
 
 //======================================================================
@@ -48,7 +50,7 @@ Specie::Specie(VariableEnv<Vecteur<float>>& v, string specie, int speed)
 Specie mean(Specie A, Specie B)
 {
     VariableEnv newNiche(A.niche.parameters+B.niche.parameters/float(2));
-    Specie infant(newNiche,"("+A.name+B.name+")",min(A.diffusion_speed, B.diffusion_speed));
+    Specie infant(newNiche,"("+A.name+B.name+")",min(A.diffusion_speed, B.diffusion_speed), A.tolerance);
     return(infant);
 }
 

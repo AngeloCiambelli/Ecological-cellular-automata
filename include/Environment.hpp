@@ -34,17 +34,20 @@ class Environment_t
         float distMean;                                           //Distribution mean used if the environment have random generation
         float distVar;                                            //Distribution variance used if the environment have random generation
         string name;                                              //Name of the environnment with its characteristics
+        string envType;
 
         vector<VariableEnv<Vecteur<float>>> conditions;           //Environmental matrix
         vector<Specie> species;                                   //List of species that live in the Environment_t
         vector<vector<Specie>> repartition;                       //Species repartition matrix
         vector<int> numberOfChanges;                              //Number of changes in the occupancy for every spot in the lattice
+        map<string, Vecteur<float>> adaptationScores;             //Species adaptation scores
         
         //Constructors
         Environment_t(){};                                                                                                    //Empty constructor
-        Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string GenType, string repType);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
-        Environment_t(const sf::Image& image, vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType); //Constructor of an environment matrix using image for environmental conditions
-        
+        Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string GenType, string repType, string variability);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
+        Environment_t(const sf::Image& image, vector<Specie> sp, map<string,float> parameters, string filename, string repType, string variability); //Constructor of an environment matrix using image for environmental conditions
+        Environment_t(const sf::Image& image1, const sf::Image& image2, vector<Specie> sp, map<string,float> parameters, string filename, string repType, string variability);
+
         //Member functions
         Environment_t migration();
         Environment_t selection();
@@ -54,8 +57,8 @@ class Environment_t
         void display(string type, int envDimension, int i);
 
         //Operators
-        bool operator ==(Environment_t env){return(this->repartition==env.repartition);};
-        bool operator !=(Environment_t env){return(this->repartition!=env.repartition);};
+        bool operator ==(const Environment_t& env){return(this->repartition==env.repartition);};
+        bool operator !=(const Environment_t& env){return(this->repartition!=env.repartition);};
 };
 
 //======================================================================
@@ -106,7 +109,7 @@ string makeName(string filename, map<string,float> parameters, vector<Specie> sp
 }
 
 //Convert the repartition to a pixel array
-tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(Environment_t env){
+tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(const Environment_t& env){
 
     //Create the color palette
     Vecteur<Vecteur<int>> colorMap(env.species.size(), Vecteur<int> ({0, 0, 0, 255}));
@@ -176,7 +179,7 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> changeToPixel(vector<T1>
 }
 
 //Convert the environmental conditions to a pixel array
-tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(vector<VariableEnv<Vecteur<float>>> x, int dimension){
+tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(const vector<VariableEnv<Vecteur<float>>>& x, int dimension){
 
     //Fill the with intensity depending on the value of x[i]
     Vecteur<Vecteur<int>> pixelArray(x.size(), Vecteur<int> ({255, 255, 255, 255}));
@@ -218,7 +221,7 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(vector<Variab
 
 //float unitEnv, int m, float a, float b,
 //Constructor from functors only
-Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType) : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];    
@@ -229,6 +232,7 @@ Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, st
     if (parameters.find("distMean") != parameters.end()){distMean = parameters["distMean"];} 
     if (parameters.find("distVar") != parameters.end()){distVar = parameters["distVar"];}
     if (parameters.find("persistency") != parameters.end()){persistency = parameters["persistency"];}  
+    envType = variability;
 
     //Construction of the environmental matrix
     conditions.resize(m*n);
@@ -245,10 +249,20 @@ Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, st
 
     //Add the parameters and species used in the name of the environment
     name = makeName(filename, parameters, sp);
+
+    //Make the adaptationScore grid of each species if the environment is constant (otherwise useless)
+    if(envType=="constant")
+    {
+        for (int i=0; i<sp.size(); i++)
+        {
+            adaptationScoreFunctor test;
+            adaptationScores.insert({sp[i].name,test(conditions, sp[i], m ,n)});
+        }
+    }
 }
 
 //Constructor from functors and image to set environmental parameters
-Environment_t::Environment_t(const sf::Image& image, vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType) : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+Environment_t::Environment_t(const sf::Image& image, vector<Specie> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];    
@@ -259,10 +273,11 @@ Environment_t::Environment_t(const sf::Image& image, vector<Specie> sp, map<stri
     if (parameters.find("distMean") != parameters.end()){distMean = parameters["distMean"];} 
     if (parameters.find("distVar") != parameters.end()){distVar = parameters["distVar"];}
     if (parameters.find("persistency") != parameters.end()){persistency = parameters["persistency"];} 
+    envType = variability;
 
     //Construction of the environmental matrix
     conditions.resize(m*n);
-    envFunctor intialEnv; 
+    envFunctor intialEnv;
     intialEnv(conditions, m, n, image);
 
     //Species
@@ -275,6 +290,51 @@ Environment_t::Environment_t(const sf::Image& image, vector<Specie> sp, map<stri
 
     //Add the parameters and species used in the name of the environment
     name = makeName(filename, parameters, sp);
+
+    //Make the adaptationScore grid of each species
+    for (int i=0; i<sp.size(); i++)
+    {
+        adaptationScoreFunctor test;
+        adaptationScores.insert({sp[i].name,test(conditions, sp[i], m ,n)});
+    }
+}
+
+//Constructor from functors and two images to set environmental parameters
+Environment_t::Environment_t(const sf::Image& image1, const sf::Image& image2, vector<Specie> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+{   
+    //Extract the parameters
+    n = parameters["n"];    
+    m = parameters["m"];
+    if (parameters.find("unit") != parameters.end()){envDilatation = parameters["unit"];} 
+    if (parameters.find("envDilatation") != parameters.end()){envDilatation = parameters["envDilatation"];}        
+    if (parameters.find("envDelay") != parameters.end()){envDelay = parameters["envDelay"];}
+    if (parameters.find("distMean") != parameters.end()){distMean = parameters["distMean"];} 
+    if (parameters.find("distVar") != parameters.end()){distVar = parameters["distVar"];}
+    if (parameters.find("persistency") != parameters.end()){persistency = parameters["persistency"];} 
+    envType = variability;
+
+    //Construction of the environmental matrix
+    conditions.resize(m*n);
+    envFunctor intialEnv;
+    intialEnv(conditions, m, n, image1, image2);
+
+    //Species
+    species = sp;
+
+    //Construction of the intial repartition
+    repartition.resize(m*n);
+    repFunctor initialRep;
+    initialRep(repartition, m, n, sp, repType);
+
+    //Add the parameters and species used in the name of the environment
+    name = makeName(filename, parameters, sp);
+
+    //Make the adaptationScore grid of each species
+    for (int i=0; i<sp.size(); i++)
+    {
+        adaptationScoreFunctor test;
+        adaptationScores.insert({sp[i].name,test(conditions, sp[i], m ,n)});
+    }
 }
 
 //Diffusion of the species on the grid (determinist)
@@ -320,34 +380,71 @@ Environment_t Environment_t::selection(){
     //New environment
     Environment_t newEnv(*this);
 
-    for (int i=0; i<this->m; i++){
-        for (int j=0; j<this->n; j++){
-            if (this->repartition[i*this->n+j].size()!=0){
-                float score((this->repartition[i*this->n+j][0].niche.parameters - this->conditions[i*this->n+j].parameters).norm() / ((this->conditions[i*this->n+j].parameters).norm()+float(0.0001)));
-                int ind(0);
-                
-                for (int k=1; k<this->repartition[i*this->n+j].size(); k++)
-                {
-                    if (((this->repartition[i*this->n+j][k].niche.parameters - this->conditions[i*this->n+j].parameters).norm()+this->persistency) / ((this->conditions[i*this->n+j].parameters).norm()+float(0.0001)) < score)
-                    {
-                        ind = k;
-                        score = (this->repartition[i*this->n+j][k].niche.parameters - this->conditions[i*this->n+j].parameters).norm() / ((this->conditions[i*this->n+j].parameters).norm()+float(0.0001));
+    //If the environnement is variable (changing with time) re-calculate everytime all the scores
+    if (this->envType=="variable"){
+        for (int i=0; i<this->m; i++){
+            for (int j=0; j<this->n; j++){
+                if (this->repartition[i*this->n+j].size()!=0){
+                    gaussianScore scoreFunction;
+                    float score = scoreFunction(this->conditions[i*this->n+j].parameters, this->repartition[i*this->n+j][0]);
+                    int ind(0);
+                    
+                    for (int k=1; k<this->repartition[i*this->n+j].size(); k++){
+                        float score_k = scoreFunction(this->conditions[i*this->n+j].parameters, this->repartition[i*this->n+j][k]);
+                        if (score_k > score)
+                        {
+                            ind = k;
+                            score = score_k;
+                        }
                     }
-                }
-                
-                if (newEnv.repartition[i*this->n+j].size()!=0)
-                {
-                    if (ind!=0)
-                    {
-                        newEnv.numberOfChanges[i*this->n+j]+=1;
-                    }
+                    
+                    if (newEnv.repartition[i*this->n+j].size()!=0){
+                        if (ind!=0)
+                        {
+                            newEnv.numberOfChanges[i*this->n+j]+=1;
+                        }
 
-                    Vecteur<Specie> bestSp({this->repartition[i*this->n+j][ind]});
-                    newEnv.repartition[i*this->n+j]=bestSp;
+                        Vecteur<Specie> bestSp({this->repartition[i*this->n+j][ind]});
+                        newEnv.repartition[i*this->n+j]=bestSp;
+                    }
                 }
             }
         }
     }
+
+    //If the environnement is constant use pre-calculated scores
+    else if (this->envType=="constant"){
+        for (int i=0; i<this->m; i++){
+            for (int j=0; j<this->n; j++){
+                if (this->repartition[i*this->n+j].size()!=0){
+                    float score = this->adaptationScores[this->repartition[i*this->n+j][0].name][i*this->n+j];
+                    int ind(0);
+                    
+                    for (int k=1; k<this->repartition[i*this->n+j].size(); k++)
+                    {
+                        if (this->adaptationScores[this->repartition[i*this->n+j][k].name][i*this->n+j] > score)
+                        {
+                            ind = k;
+                            score = this->adaptationScores[this->repartition[i*this->n+j][k].name][i*this->n+j];
+                        }
+                        
+                    }
+                    
+                    if (newEnv.repartition[i*this->n+j].size()!=0)
+                    {
+                        if (ind!=0)
+                        {
+                            newEnv.numberOfChanges[i*this->n+j]+=1;
+                        }
+
+                        Vecteur<Specie> bestSp({this->repartition[i*this->n+j][ind]});
+                        newEnv.repartition[i*this->n+j]=bestSp;
+                    }
+                }
+            }
+        }
+    }
+    
     return newEnv;
 }
 

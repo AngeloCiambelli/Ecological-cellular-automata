@@ -43,7 +43,7 @@ Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot)
 {   
     //Initialization
     environment = env_init;
-    timeBeforeStationarity = 0;
+    timeBeforeStationarity = 0;     
     countVector.resize(environment.species.size());
 
     //count the populations
@@ -51,7 +51,7 @@ Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot)
     for (int k=0; k<environment.species.size(); k++){countVector[k].push_back(counts[k]);}
     
     //Dimensions to display in the environment
-    int dimension=0;
+    int dimension=1;
 
     //Generate pixel array
     if (plot==true){environment.display("merged", dimension);}
@@ -72,8 +72,7 @@ Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot)
         if (plot==true){environment.display("merged", dimension, i);}
 
         //Check if the automaton is still avancing
-        if (oldEnvironment == environment & timeBeforeStationarity==0){timeBeforeStationarity=i-1;}
-        //delete &oldEnvironment;
+        if (oldEnvironment == environment & timeBeforeStationarity==0){timeBeforeStationarity=i-1; break;}
     }
 }
 

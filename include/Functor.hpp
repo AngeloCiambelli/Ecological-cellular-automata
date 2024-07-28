@@ -7,15 +7,78 @@
 #include <list>
 #include <map>
 #include <cmath>
+#include <SFML/Graphics.hpp>
 #include <math.h>
 #include <string>
 #include "VariableEnv.hpp"
 #include "Species.hpp"
 #include "Environment.hpp"
 #include "Vecteur.hpp"
-#include <SFML/Graphics.hpp>
 
 using namespace std;
+
+//======================================================================
+//                    Linear algebra functions toolbox 
+//======================================================================
+
+//Function to perform Cholesky decomposition
+void choleskyDecomposition(const Vecteur<Vecteur<float>> &A, Vecteur<Vecteur<float>> &L) {
+    int n = A.size();
+    L = Vecteur<Vecteur<float>>(n, Vecteur<float>(n, 0));
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j <= i; ++j) {
+            float sum = 0;
+            if (j == i) { //Diagonal elements
+                for (int k = 0; k < j; ++k) {
+                    sum += L[j][k] * L[j][k];
+                }
+                L[j][j] = sqrt(A[j][j] - sum);
+            } else {
+                for (int k = 0; k < j; ++k) {
+                    sum += L[i][k] * L[j][k];
+                }
+                L[i][j] = (A[i][j] - sum) / L[j][j];
+            }
+        }
+    }
+}
+
+//Function to compute the determinant of an upper triangular matrix
+float determinant(const Vecteur<Vecteur<float>> &L) {
+    float det = 1.0;
+    for (int i = 0; i < L.size(); ++i) {
+        det *= L[i][i];
+    }
+    return det;
+}
+
+//Function to solve the system of linear equations using forward and backward substitution
+Vecteur<float> solveCholesky(const Vecteur<Vecteur<float>> &L, const Vecteur<float> &b) {
+    int n = b.size();
+    Vecteur<float> y(n, 0);
+    Vecteur<float> x(n, 0);
+
+    //Forward substitution to solve Ly = b
+    for (int i = 0; i < n; ++i) {
+        float sum = 0;
+        for (int j = 0; j < i; ++j) {
+            sum += L[i][j] * y[j];
+        }
+        y[i] = (b[i] - sum) / L[i][i];
+    }
+
+    //Backward substitution to solve L^T x = y
+    for (int i = n - 1; i >= 0; --i) {
+        float sum = 0;
+        for (int j = i + 1; j < n; ++j) {
+            sum += L[j][i] * x[j];
+        }
+        x[i] = (y[i] - sum) / L[i][i];
+    }
+
+    return x;
+}
 
 //======================================================================
 //                           Class envFunctor 
@@ -59,10 +122,11 @@ public:
 
     else if (gen == "pointStart") {
       
+      
       for (int i=0; i<m; i++){
         for (int j=0; j<n; j++)
         {
-          rep[i*n+j].push_back(sp[3]); //MAsk species of the sea
+          rep[i*n+j].push_back(sp[2]); //Mask species of the sea
         }
       }
       
@@ -80,11 +144,12 @@ public:
         int j_bis = dist_n(rng);
         rep[i_bis*n+j_bis].pop_back();
         rep[i_bis*n+j_bis].push_back(sp[1]); 
-
+        
         int i_bis2 = dist_m(rng);
         int j_bis2 = dist_n(rng);
         rep[i_bis2*n+j_bis2].pop_back();
-        rep[i_bis2*n+j_bis2].push_back(sp[2]);
+        rep[i_bis2*n+j_bis2].push_back(sp[3]);
+        
       }
     }
 
@@ -114,7 +179,7 @@ public:
           std::random_device rd{};
           std::mt19937 gen{rd()}; //Using generation 32-bit Mersenne Twister by Matsumoto and Nishimura, 1998 (one of the best)
           normal_distribution<float> dist(parameters["distMean"],sqrt(parameters["distVar"]));
-          env[i*parameters["n"]+j].parameters=Vecteur<float>({float(dist(gen))});  
+          env[i*parameters["n"]+j].parameters=Vecteur<float>({float(dist(gen)), float(dist(gen)), float(dist(gen))});  
         }
       }
     }
@@ -127,11 +192,66 @@ public:
     for (int y = 0; y < m; ++y) {
       for (int x = 0; x < n; ++x) {
         sf::Color color = image.getPixel(x, y);
-        env[y*n+x].parameters=Vecteur<float>({static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)});
+        env[y*n+x].parameters=Vecteur<float>({static_cast<int>(color.r)});
       }
     }
 
     return env;
+  }
+
+  vector<VariableEnv<Vecteur<float>>>& operator()(vector<VariableEnv<Vecteur<float>>>& env, int m, int n, const sf::Image& image1,  const sf::Image& image2)
+  {
+    for (int y = 0; y < m; ++y) {
+      for (int x = 0; x < n; ++x) {
+        sf::Color color1 = image1.getPixel(x, y);
+        sf::Color color2 = image2.getPixel(x, y);
+        env[y*n+x].parameters=Vecteur<float>({static_cast<int>(color1.r), static_cast<int>(color2.g)});
+      }
+    }
+
+    return env;
+  }
+};
+
+// Functor used to calculate gaussian score
+class gaussianScore
+{
+public:
+  float operator()(Vecteur<float> x, Specie sp) {
+    int k = x.size();
+    
+    Vecteur<Vecteur<float>>  toleranceCholesky;
+    choleskyDecomposition(sp.tolerance, toleranceCholesky);
+    float toleranceDet = determinant(toleranceCholesky);
+
+    // Compute the normalization constant
+    float norm_const = 1.0 / pow(2 * M_PI, k / 2.0) / pow(toleranceDet, 2);
+
+    // Compute the exponent term
+    Vecteur<float> diff = x - sp.niche.parameters;
+
+    Vecteur<float> temp = solveCholesky(toleranceCholesky, diff);
+    float exponent = temp|temp;
+    exponent = -0.5 * exponent;
+
+    // Compute the Gaussian value
+    return norm_const * exp(exponent);
+  }
+};
+
+// Functor used to create a adaptation score grid for a species
+class adaptationScoreFunctor
+{
+public:
+  Vecteur<float> operator()(const vector<VariableEnv<Vecteur<float>>> &cond, Specie sp, int m, int n) {
+    gaussianScore func;
+    Vecteur<float> grid(m*n);
+    for (int i=0; i<m; i++){
+      for (int j=0; j<n; j++){
+        grid[i*n+j] = func(cond[i*n+j].parameters, sp);
+      }
+    }
+    return(grid);
   }
 };
 
