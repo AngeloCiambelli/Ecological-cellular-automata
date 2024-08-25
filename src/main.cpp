@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
     //===========================================================================
 
     map<string, float> parameters;
-    parameters["n"] = sizeDepth.x;                   //Number of columns of the lattice
-    parameters["m"] = sizeDepth.y;                   //Number of rows of the lattice
+    parameters["n"] = sizeDepth.x;              //Number of columns of the lattice
+    parameters["m"] = sizeDepth.y;              //Number of rows of the lattice
     int nIter =400;                             //Number of iteration in the simulation
     bool plot = true;                           //Plot the results
     string envGeneration = "percolation";       //Method to generate the environnement : "normal", "function", "percolation" (Not used when using images)
