@@ -109,9 +109,9 @@ int main(int argc, char *argv[])
     string filename="heterogenous=bloscon \n "+envType+"\n ";
 
     //Construction of the environnement
-    Environment_t E(depthImage, vegetationImage, spVector, parameters, filename, initialRepartition, envType);         //Env from two images and functors
-    //Environment_t E(spVector, parameters, filename, envGeneration, initialRepartition, envType);                     //Env from functors only
-    //Environment_t E(depthImage, spVector, parameters, filename, initialRepartition, envType);                        //Env from an image and functors
+    Environment E(depthImage, vegetationImage, spVector, parameters, filename, initialRepartition, envType);         //Env from two images and functors
+    //Environment E(spVector, parameters, filename, envGeneration, initialRepartition, envType);                     //Env from functors only
+    //Environment E(depthImage, spVector, parameters, filename, initialRepartition, envType);                        //Env from an image and functors
 
     //===========================================================================
     //                              Run simulation
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
                     //param["persistency"] = persistencies[k];
 
                     //Creation of the environment
-                    Environment_t E(spVector, param, filename, "percolation", "pointStart");
+                    Environment E(spVector, param, filename, "percolation", "pointStart");
 
                     //Run simulation
                     Simulation automate(E, nIter, plot);
