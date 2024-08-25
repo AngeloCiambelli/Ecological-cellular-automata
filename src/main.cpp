@@ -4,6 +4,7 @@
 #include <cmath>
 #include "Vecteur.hpp"
 #include "VariableEnv.hpp"
+#include "Population.hpp"
 #include "Environment.hpp"
 #include "Simulation.hpp"
 #include "Functor.hpp"
@@ -13,86 +14,120 @@ namespace plt = matplotlibcpp;
 
 int main(int argc, char *argv[])
 {
-    //Load environmental image
+    //===========================================================================
+    //                          Load environmental image
+    //                 (Carefull with image sizes, they need to match)
+    //===========================================================================
+
     sf::Image depthImage;
     sf::Image vegetationImage;
-    depthImage.loadFromFile("include/roscoff_rocky_beach.png"); //Carefull with image size...
-    vegetationImage.loadFromFile("include/vegetation_cover.png");
-    sf::Vector2u size = depthImage.getSize();
-    sf::Vector2u sizeVege = vegetationImage.getSize();
-    if(size.x != sizeVege.x | size.y != sizeVege.y){cout << "image size don't match \n"; exit(1);} //Check before if the two images have the same size
+    depthImage.loadFromFile("include/roscoff_rocky_beach_resized_full_sea.png");
+    vegetationImage.loadFromFile("include/vegetation_cover_1.png");
+    sf::Vector2u sizeDepth = depthImage.getSize();
+    sf::Vector2u sizeVeg = vegetationImage.getSize();
+    if(sizeDepth.x != sizeVeg.x | sizeDepth.y != sizeVeg.y){cout << "image size don't match \n"; exit(1);} //Check before if the two images have the same size
+
+    //===========================================================================
+    //                          Define model parameters
+    //===========================================================================
 
     map<string, float> parameters;
-    parameters["n"] = size.x;               //Number of columns of the lattice
-    parameters["m"] = size.y;               //Number of rows of the lattice
-    //parameters["unit"] = 0.1;             //Unit of the square (to simplify function use)
-    //parameters["envDilatation"] = 5;      //Oscillation parameter
-    //parameters["envDelay"] = 0;           //Speed of the travelling wave
-    parameters["persistency"] = 0;          //Persistency of the species
-    parameters["distMean"] = 0.5;           //Mean of species niche, mean of the distribution used for environment generation
-    parameters["distVar"] = 0.5;            //Variance of the distribution used for environment generation
-    int nIter = 60;                         //Number of iteration in the simulation
-    bool plot = true;                       //If you want to plot the results
-    string envGeneration = "random";        //Method to generate the environnement : "random", "function"
-    string initialRepartition = "pointStart"; //Method to initialize the species repartition : "bottomStart", "oppositeCornerStart", "pointStart"
-    string envType = "constant";            //Type of the environment : "constant", "variable"
+    parameters["n"] = sizeDepth.x;                   //Number of columns of the lattice
+    parameters["m"] = sizeDepth.y;                   //Number of rows of the lattice
+    int nIter =400;                             //Number of iteration in the simulation
+    bool plot = true;                           //Plot the results
+    string envGeneration = "percolation";       //Method to generate the environnement : "normal", "function", "percolation" (Not used when using images)
+    string initialRepartition = "pointStart";   //Method to initialize the species repartition : "bottomStart", "oppositeCornerStart", "pointStart", "centralStart"
+    string envType = "constant";                //Type of the environment : "constant", "variable"
 
-    //Define the generic filename
-    string filename="heterogenous=NormalDist \n "+envType+"\n ";
+    //Probability of open/close, to use when environnement is a percolation pattern 
+    //parameters["percolationProbability"] = 0.1;
+
+    //Parameters of the nomral distribution to use for environmental generation
+    //parameters["distMean"] = 0.5;             //Mean of species niche, mean of the distribution used for environment generation
+    //parameters["distVar"] = 0.5;              //Variance of the distribution used for environment generation
     
-    /*
-    //Creation of the species' niches
-    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({75}));//
-    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({125}));
-    VariableEnv<Vecteur<float>> niche_C(Vecteur<float>({255}));
-    VariableEnv<Vecteur<float>> niche_D(Vecteur<float>({0}));
+    //Parameters when environnement is made with functions
+    //parameters["unit"] = 0.1;                 //Unit of a square
+    //parameters["envDilatation"] = 5;          //Oscillation parameter
+    //parameters["envDelay"] = 0;               //Speed of the travelling wave
 
-    Vecteur<Vecteur<float>> tol_A({Vecteur<float>({50})});//
-    Vecteur<Vecteur<float>> tol_B({Vecteur<float>({100})});
-    Vecteur<Vecteur<float>> tol_C({Vecteur<float>({1})});
-    Vecteur<Vecteur<float>> tol_D({Vecteur<float>({1})});
+    //===========================================================================
+    //                   Creation of the populations
+    //===========================================================================
+
+    //Make population' niches
+    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({7, 3}));        //Perforatus optimum
+    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({1, 5}));        //Chthamalus optimum
+    VariableEnv<Vecteur<float>> niche_C(Vecteur<float>({0, 5}));        //Mask optimum
+
+    Vecteur<Vecteur<float>> tol_A({Vecteur<float>({3, 4}), Vecteur<float>({4, 8})});       //Perforatus tolerance
+    Vecteur<Vecteur<float>> tol_B({Vecteur<float>({6, 0}), Vecteur<float>({0, 100})});     //Chthamalus tolerance
+    Vecteur<Vecteur<float>> tol_C({Vecteur<float>({0.01, 0}), Vecteur<float>({0, 100})});  //Mask tolerance
+
+    /*
+    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({7})); 
+    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({3}));
+    VariableEnv<Vecteur<float>> niche_C(Vecteur<float>({0}));
+
+    Vecteur<Vecteur<float>> tol_A({Vecteur<float>({3})});
+    Vecteur<Vecteur<float>> tol_B({Vecteur<float>({4.5})});
+    Vecteur<Vecteur<float>> tol_C({Vecteur<float>({0.1})});
     */
 
-    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({75, 39}));//Perforatus
-    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({125, 255}));//Chthamalus
-    VariableEnv<Vecteur<float>> niche_C(Vecteur<float>({255, 255}));//Mask
-    VariableEnv<Vecteur<float>> niche_D(Vecteur<float>({0, 255}));//Mask
+    /*
+    VariableEnv<Vecteur<float>> niche_A(Vecteur<float>({0}));
+    VariableEnv<Vecteur<float>> niche_B(Vecteur<float>({1}));
 
-    Vecteur<Vecteur<float>> tol_A({Vecteur<float>({50, 75}), Vecteur<float>({0, 200})});//
-    Vecteur<Vecteur<float>> tol_B({Vecteur<float>({100, 0}), Vecteur<float>({0, 255})});
-    Vecteur<Vecteur<float>> tol_C({Vecteur<float>({1, 0}), Vecteur<float>({0, 255})});
-    Vecteur<Vecteur<float>> tol_D({Vecteur<float>({1, 0}), Vecteur<float>({0, 255})});
+    Vecteur<Vecteur<float>> tol_A({Vecteur<float>({1})});
+    Vecteur<Vecteur<float>> tol_B({Vecteur<float>({1})});
+    */
 
-    //Creation of the species*/
-    Specie A(niche_A,"A", 2, tol_A);
-    Specie B(niche_B,"B", 2, tol_B);
-    Specie C(niche_C,"C", 2, tol_C);
-    Specie D(niche_D,"D", 2, tol_D);
+    //Creation of the species
+    Population A(niche_A, "A", 1, tol_A);
+    Population B(niche_B, "B", 1, tol_B);
+    Population C(niche_C, "C", 1, tol_C);
+
+    //===========================================================================
+    //                      Creation of the environnement
+    //===========================================================================
 
     //Creation of the species list
-    vector<Specie> spVector({A, B, C, D});  
+    vector<Population> spVector({A, B, C}); 
 
-    //Creation of the environment
-    //Environment_t E(spVector, parameters, filename, envGeneration, initialRepartition, envType); //Env from functors only
-    Environment_t E(depthImage, vegetationImage, spVector, parameters, filename, initialRepartition, envType);           //Env from image and functors
-    //Environment_t E(depthImage, spVector, parameters, filename, initialRepartition, envType); 
+    //Define the generic filename
+    string filename="heterogenous=bloscon \n "+envType+"\n ";
 
-    //Running simulation
+    //Construction of the environnement
+    Environment_t E(depthImage, vegetationImage, spVector, parameters, filename, initialRepartition, envType);         //Env from two images and functors
+    //Environment_t E(spVector, parameters, filename, envGeneration, initialRepartition, envType);                     //Env from functors only
+    //Environment_t E(depthImage, spVector, parameters, filename, initialRepartition, envType);                        //Env from an image and functors
+
+    //===========================================================================
+    //                              Run simulation
+    //===========================================================================
+    
     Simulation automate(E, nIter, plot);
 
-    //Display   
-    cout << automate.countVector[0].size() << endl;
-    cout << automate.timeBeforeStationarity << endl;
-
-    Vecteur<float> t; for (int i=0; i<automate.timeBeforeStationarity+2; i++){t.push_back(i);}
+    //===========================================================================
+    //                                  Display
+    //===========================================================================  
+    
+    /*
+    Vecteur<float> t; for (int i=0; i<automate.timeBeforeStationarity+2; i++){t.push_back(i);}    
     plt::plot(t, automate.countVector[0]/(parameters["m"]*parameters["n"]));
-    plt::title("Proportion of the specie A (#square A/# tot square)");
+    plt::title("Proportion of the Population A (#square A/# tot square)");
     //plt::legend();
     plt::savefig("output/images/popSizes.pdf");
     plt::clf();
+    */
+
+    //===========================================================================
+    //                               Situational code
+    //=========================================================================== 
 
     /*
-    //Convert repartiton of species into a labelled array for display
+    //Convert repartition of species into a labelled array for display
     Vecteur<int> labels({1,2});
     Vecteur<int> repartitionLabeled({});
     for (int i=0; i<parameters["n"]; i++)
@@ -107,12 +142,13 @@ int main(int argc, char *argv[])
     plt::legend();
     plt::savefig("output/images/rep_scatter.pdf");
     plt::clf();
-    
-    
+    */
+
+    /*
     //Input
-    int nReplicate = 1;//20;
-    vector<float> means({0.5}); //{0.3,0.4,0.5,0.55,0.56,0.57,0.58,0.59,0.6,0.7,0.8,0.9}
-    vector<float> variances({0.5});
+    int nReplicate = 10;
+    vector<float> means({0.3,0.4,0.5,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.7,0.8,0.9});
+    vector<float> variances({0});
     vector<float> persistencies({0});
     int padding = 50;
     
@@ -137,17 +173,18 @@ int main(int argc, char *argv[])
 
             for (int i=0; i<means.size(); i++){
                 for (int j=0; j<variances.size(); j++){ 
-                    
+                     
                     //Creation of the environment
                     map<string, float> param;
                     param["n"] = parameters["n"];
                     param["m"] = parameters["m"];
-                    param["distMean"] =  means[i];
-                    param["distVar"] = variances[j];
-                    param["persistency"] = persistencies[k];
+                    param["percolationProbability"] = means[i];
+                    //param["distMean"] =  means[i];
+                    //param["distVar"] = variances[j];
+                    //param["persistency"] = persistencies[k];
 
                     //Creation of the environment
-                    Environment_t E(spVector, param, filename, "random", "oppositeCornerStart");
+                    Environment_t E(spVector, param, filename, "percolation", "pointStart");
 
                     //Run simulation
                     Simulation automate(E, nIter, plot);
@@ -160,18 +197,18 @@ int main(int argc, char *argv[])
                     replicateEndMigration.push_back(automate.timeBeforeStationarity);
 
                     //Do one curve
-                    replicatePopSize.push_back(automate.countVector[0]/float(parameters["m"]*parameters["n"]));
+                    //replicatePopSize.push_back(automate.countVector[0]/float(parameters["m"]*parameters["n"]));
                 }
                 cout << "column " << i << " finished \n";
             }
-        
+
         //Display the result and save to a file
         envRender.display();
         sf::Image finalImage = envRender.getTexture().copyToImage();
         finalImage.saveToFile("/home/angelo/Documents/Master/MasterMaths/MesProjets/Network_diffusion/output/images/ " + filename + " gridMean&Variance \n persistency=" + to_string(persistencies[k]) + "\n replicat" + to_string(l) + ".png");
 
         allEndMigration[l] += replicateEndMigration;
-        allPopSize[l] += replicatePopSize;
+        //allPopSize[l] += replicatePopSize;
         }
     }
 
@@ -179,25 +216,27 @@ int main(int argc, char *argv[])
     for (int i=0; i<nReplicate;i++){
         endMigrationMean += (allEndMigration[i]/float(nReplicate));
         for (int j=0; j<means.size(); j++){
-            popSizeMean[j] += (allPopSize[i][j]/float(nReplicate));
+            //popSizeMean[j] += (allPopSize[i][j]/float(nReplicate));
         }
     }
     
     //Calculate Std deviation
     for (int i=0; i<nReplicate; i++){
         for (int j=0; j<means.size(); j++){
-            popSizeStdDev[j] +=  allPopSize[i][j]*allPopSize[i][j] - 2.f*(allPopSize[i][j]*popSizeMean[j]) + (popSizeMean[j]*popSizeMean[j]);
+            //popSizeStdDev[j] +=  allPopSize[i][j]*allPopSize[i][j] - 2.f*(allPopSize[i][j]*popSizeMean[j]) + (popSizeMean[j]*popSizeMean[j]);
         }
         endMigrationStdDev += allEndMigration[i]*allEndMigration[i] - 2.f*(allEndMigration[i]*endMigrationMean) + (endMigrationMean*endMigrationMean);
     }
-
+    
     for (int i=0; i<means.size(); i++){
         for (int j=0; j<nIter; j++){
-            popSizeStdDev[i][j] = sqrt(popSizeStdDev[i][j]/float(nReplicate-1));
+            //popSizeStdDev[i][j] = sqrt(popSizeStdDev[i][j]/float(nReplicate-1));
         }
         endMigrationStdDev[i] = sqrt(endMigrationStdDev[i]/float(nReplicate-1));
     }
+    */
 
+    /*
     //Plot the curves invaderProp vs Mean
     for (int i=0; i<means.size();i++){
         plt::errorbar(t, popSizeMean[i], popSizeStdDev[i],{{"label", "mean="+to_string(means[i])}});
@@ -206,12 +245,22 @@ int main(int argc, char *argv[])
     plt::legend();
     plt::savefig("output/images/popSize_vs_mean.pdf");
     plt::clf();
+    */
+
+    /*
+    cout << "stationaryTimes: " <<  endMigrationMean;
+    cout << "stationaryStdDev: " <<  endMigrationStdDev;
 
     //Plot the migration time vs the generation mean
-    plt::errorbar(means,endMigrationMean, endMigrationStdDev);
-    plt::title("Number of iteration before the end of migrations");
+    plt::errorbar(means,endMigrationMean, endMigrationStdDev, {{"fmt", "o"}, {"color", "black"}, {"linestyle","-"}});
+
+    // Add a vertical dotted line at x = 0.59274605079210
+    double percolation_threshold = 0.59274605079210;
+    plt::axvline(percolation_threshold, {{"color", "black"}, {"linestyle", ":"}});
+    
+    //plt::title("Number of iteration before the end of migrations");
     plt::savefig("output/images/endMigration_vs_mean.pdf");
+    */
 
     cout << endl << "Finished" << endl;
-    */
 }
