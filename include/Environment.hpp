@@ -9,7 +9,7 @@
 #include <math.h>
 #include <string>
 #include "VariableEnv.hpp"
-#include "Species.hpp"
+#include "Population.hpp"
 #include "Functor.hpp"
 #include <SFML/Graphics.hpp>
 #include <filesystem>
@@ -30,23 +30,23 @@ class Environment_t
         float unit;                                               //Unit of the lattice
         float envDilatation;                                      //Parameter of dilatation to set or change the environment
         float envDelay;                                           //Parameter of delay to set or change the environment
-        float persistency;                                        //Persistency of the species (how much better do you have to be at a lattice point to replace it)
         float distMean;                                           //Distribution mean used if the environment have random generation
         float distVar;                                            //Distribution variance used if the environment have random generation
+        float percolationProbability;                             //Percolation Probability used to generate the environnement (if used)
         string name;                                              //Name of the environnment with its characteristics
         string envType;
 
         vector<VariableEnv<Vecteur<float>>> conditions;           //Environmental matrix
-        vector<Specie> species;                                   //List of species that live in the Environment_t
-        vector<vector<Specie>> repartition;                       //Species repartition matrix
+        vector<Population> species;                                   //List of species that live in the Environment_t
+        vector<vector<Population>> repartition;                       //Species repartition matrix
         vector<int> numberOfChanges;                              //Number of changes in the occupancy for every spot in the lattice
         map<string, Vecteur<float>> adaptationScores;             //Species adaptation scores
         
         //Constructors
         Environment_t(){};                                                                                                    //Empty constructor
-        Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string GenType, string repType, string variability);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
-        Environment_t(const sf::Image& image, vector<Specie> sp, map<string,float> parameters, string filename, string repType, string variability); //Constructor of an environment matrix using image for environmental conditions
-        Environment_t(const sf::Image& image1, const sf::Image& image2, vector<Specie> sp, map<string,float> parameters, string filename, string repType, string variability);
+        Environment_t(vector<Population> sp, map<string,float> parameters, string filename, string GenType, string repType, string variability);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
+        Environment_t(const sf::Image& image, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability); //Constructor of an environment matrix using image for environmental conditions
+        Environment_t(const sf::Image& image1, const sf::Image& image2, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability);
 
         //Member functions
         Environment_t migration();
@@ -87,7 +87,7 @@ ostream& operator <<(ostream & out, const Environment_t& E)
 }
 
 //make a customed name for the environment with its parameters
-string makeName(string filename, map<string,float> parameters, vector<Specie> sp){
+string makeName(string filename, map<string,float> parameters, vector<Population> sp){
     
     //Add the parameters to the filename
     for (auto it=parameters.begin(); it!=parameters.end(); ++it){
@@ -221,7 +221,7 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(const vector<
 
 //float unitEnv, int m, float a, float b,
 //Constructor from functors only
-Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, string filename, string genType, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+Environment_t::Environment_t(vector<Population> sp, map<string,float> parameters, string filename, string genType, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];    
@@ -230,8 +230,8 @@ Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, st
     if (parameters.find("envDilatation") != parameters.end()){envDilatation = parameters["envDilatation"];}        
     if (parameters.find("envDelay") != parameters.end()){envDelay = parameters["envDelay"];}
     if (parameters.find("distMean") != parameters.end()){distMean = parameters["distMean"];} 
-    if (parameters.find("distVar") != parameters.end()){distVar = parameters["distVar"];}
-    if (parameters.find("persistency") != parameters.end()){persistency = parameters["persistency"];}  
+    if (parameters.find("distVar") != parameters.end()){distVar = parameters["distVar"];} 
+    if (parameters.find("percolationProbability") != parameters.end()){percolationProbability = parameters["percolationProbability"];} 
     envType = variability;
 
     //Construction of the environmental matrix
@@ -262,7 +262,7 @@ Environment_t::Environment_t(vector<Specie> sp, map<string,float> parameters, st
 }
 
 //Constructor from functors and image to set environmental parameters
-Environment_t::Environment_t(const sf::Image& image, vector<Specie> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+Environment_t::Environment_t(const sf::Image& image, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];    
@@ -272,7 +272,6 @@ Environment_t::Environment_t(const sf::Image& image, vector<Specie> sp, map<stri
     if (parameters.find("envDelay") != parameters.end()){envDelay = parameters["envDelay"];}
     if (parameters.find("distMean") != parameters.end()){distMean = parameters["distMean"];} 
     if (parameters.find("distVar") != parameters.end()){distVar = parameters["distVar"];}
-    if (parameters.find("persistency") != parameters.end()){persistency = parameters["persistency"];} 
     envType = variability;
 
     //Construction of the environmental matrix
@@ -300,7 +299,7 @@ Environment_t::Environment_t(const sf::Image& image, vector<Specie> sp, map<stri
 }
 
 //Constructor from functors and two images to set environmental parameters
-Environment_t::Environment_t(const sf::Image& image1, const sf::Image& image2, vector<Specie> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+Environment_t::Environment_t(const sf::Image& image1, const sf::Image& image2, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];    
@@ -310,7 +309,6 @@ Environment_t::Environment_t(const sf::Image& image1, const sf::Image& image2, v
     if (parameters.find("envDelay") != parameters.end()){envDelay = parameters["envDelay"];}
     if (parameters.find("distMean") != parameters.end()){distMean = parameters["distMean"];} 
     if (parameters.find("distVar") != parameters.end()){distVar = parameters["distVar"];}
-    if (parameters.find("persistency") != parameters.end()){persistency = parameters["persistency"];} 
     envType = variability;
 
     //Construction of the environmental matrix
@@ -374,7 +372,7 @@ Environment_t Environment_t::migration()
     return newEnv;
 }
 
-//Selection of the best adapted specie in each node of the grid (determinist)
+//Selection of the best adapted Population in each node of the grid (determinist)
 Environment_t Environment_t::selection(){
 
     //New environment
@@ -404,7 +402,7 @@ Environment_t Environment_t::selection(){
                             newEnv.numberOfChanges[i*this->n+j]+=1;
                         }
 
-                        Vecteur<Specie> bestSp({this->repartition[i*this->n+j][ind]});
+                        Vecteur<Population> bestSp({this->repartition[i*this->n+j][ind]});
                         newEnv.repartition[i*this->n+j]=bestSp;
                     }
                 }
@@ -437,7 +435,8 @@ Environment_t Environment_t::selection(){
                             newEnv.numberOfChanges[i*this->n+j]+=1;
                         }
 
-                        Vecteur<Specie> bestSp({this->repartition[i*this->n+j][ind]});
+                        Vecteur<Population> bestSp({this->repartition[i*this->n+j][ind]});
+                        //cout << bestSp;
                         newEnv.repartition[i*this->n+j]=bestSp;
                     }
                 }

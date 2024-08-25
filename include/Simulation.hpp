@@ -11,7 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <filesystem>
 #include "VariableEnv.hpp"
-#include "Species.hpp"
+#include "Population.hpp"
 #include "Environment.hpp"
 #include "Functor.hpp"
 #include "Vecteur.hpp"
@@ -51,7 +51,7 @@ Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot)
     for (int k=0; k<environment.species.size(); k++){countVector[k].push_back(counts[k]);}
     
     //Dimensions to display in the environment
-    int dimension=1;
+    int dimension=0;
 
     //Generate pixel array
     if (plot==true){environment.display("merged", dimension);}
@@ -65,8 +65,8 @@ Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot)
         environment=environment.migration().selection();
 
         //Count the populations
-        Vecteur<float> counts = environment.countPopulations();
-        for (int k=0; k<environment.species.size(); k++){countVector[k].push_back(counts[k]);}
+        //Vecteur<float> counts = environment.countPopulations();
+        //for (int k=0; k<environment.species.size(); k++){countVector[k].push_back(counts[k]);}
 
         //Display settings
         if (plot==true){environment.display("merged", dimension, i);}

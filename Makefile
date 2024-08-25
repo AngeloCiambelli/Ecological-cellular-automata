@@ -2,7 +2,7 @@
 # 'make clean'  removes all .o and executable files
 #
 
-# define the Cpp compiler to use
+# define the C++ compiler to use
 CXX = g++
 
 # define any compile-time flags
@@ -46,14 +46,14 @@ endif
 # define any directories containing header files other than /usr/include
 INCLUDES := $(patsubst %,-I%, $(INCLUDEDIRS:%/=%))
 
-# Add MathPlot++ and Python include directories
-INCLUDES += -I./matplotlib-cpp `python3-config --cflags`
+# Add Matplotlib-cpp and Python include directories
+INCLUDES += -I./matplotlib-cpp -I$(shell python3.10 -c "import numpy; print(numpy.get_include())") `python3.10-config --cflags`
 
 # define the C libs
 LIBS := $(patsubst %,-L%, $(LIBDIRS:%/=%)) -lsfml-graphics -lsfml-window -lsfml-system
 
 # Add Python libraries explicitly
-PYTHON_LIBS := `python3-config --ldflags` -lpython3.10 -lstdc++ -lm
+PYTHON_LIBS := `python3.10-config --ldflags` -lpython3.10 -lstdc++ -lm
 
 # define the C source files
 SOURCES := $(wildcard $(patsubst %,%/*.cpp, $(SOURCEDIRS)))
@@ -86,8 +86,8 @@ $(MAIN): $(OBJECTS)
 
 # this is a suffix replacement rule for building .o's and .d's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
-# the rule(a .c file) and $@: the name of the target of the rule (a .o file)
-# -MMD generates dependency output files same name as the .o file
+# the rule (a .c file) and $@: the name of the target of the rule (a .o file)
+# -MMD generates dependency output files with the same name as the .o file
 # (see the gnu make manual section about automatic variables)
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -MMD $<  -o $@
@@ -102,3 +102,4 @@ clean:
 run: all
 	./$(OUTPUTMAIN)
 	@echo Executing 'run: all' complete!
+

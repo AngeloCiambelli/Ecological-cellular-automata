@@ -11,7 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <filesystem>
 #include "VariableEnv.hpp"
-#include "Species.hpp"
+#include "Population.hpp"
 #include "Environment.hpp"
 #include "Functor.hpp"
 #include "Vecteur.hpp"
