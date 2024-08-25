@@ -10,7 +10,16 @@
 using namespace std;
 
 //======================================================================
-// Class Population definition
+//                          Description
+//======================================================================
+//
+// Define the class to host population characteristics. 
+// Notably, diffusion speed, name, optimum, tolerance
+//
+// Define additional functions/operators related to Population.
+//
+//======================================================================
+//                  Class Population definition
 //======================================================================
 
 class Population
@@ -32,7 +41,7 @@ public:
 };
 
 //======================================================================
-// Member functions
+//                          Member functions
 //======================================================================
 
 Population::Population(VariableEnv<Vecteur<float>>& v, string Population, int speed, Vecteur<Vecteur<float>> tol)
@@ -44,7 +53,7 @@ Population::Population(VariableEnv<Vecteur<float>>& v, string Population, int sp
 }
 
 //======================================================================
-// External functions
+//                         External functions
 //======================================================================
 
 Population mean(Population A, Population B)

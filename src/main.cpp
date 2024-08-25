@@ -14,6 +14,16 @@ namespace plt = matplotlibcpp;
 
 int main(int argc, char *argv[])
 {
+
+    //===========================================================================
+    //                          Description
+    //===========================================================================
+    //
+    // Main code to simulate the dynamics of two populations of Barnacles, Chthamalus,
+    // and Perforatus on a rocky beach north of the Bloscon harbour in Roscoff.
+    // 
+    // We use two data images, containing the depth in meters and vegetation cover importance value index (IVI).
+    //
     //===========================================================================
     //                          Load environmental image
     //                 (Carefull with image sizes, they need to match)

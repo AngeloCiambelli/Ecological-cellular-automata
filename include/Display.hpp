@@ -18,6 +18,16 @@
 
 using namespace std;
 
+//======================================================================
+//                            Description
+//======================================================================
+//
+// Repertory of functions used in to display things.
+//
+//======================================================================
+//                            Code
+//======================================================================
+
 //Add a legend to the image
 void addLegend(sf::RenderTarget& target, const std::string& legendText, sf::Font& font, unsigned int imageHeight, unsigned int imageWidth) 
 {

@@ -21,25 +21,35 @@
 using namespace std;
 
 //======================================================================
-//                           Class Processus 
+//                          Description
+//======================================================================
+//
+// Define the class to run the simulation from a starting environment. 
+//
+// Notably storing the final environment, Number of interations needed 
+// before reaching stationnarity and each population number of sub-population 
+// at each time of the simulation.
+//
+//======================================================================
+//                           Class Simulation 
 //======================================================================
 
 class Simulation
 {
     public :
-        Environment_t  environment; 
-        Vecteur<Vecteur<float>> countVector;
-        int timeBeforeStationarity;                       
+        Environment  environment;               //Final environnement
+        Vecteur<Vecteur<float>> countVector;    //Each population number of sub-population at each time of the simulation
+        int timeBeforeStationarity;             //Number of interations needed before reaching stationnarity         
 
         //Constructor               
-        Simulation(const Environment_t& env_init, int nIter, bool plot); //Constructor of the function 
+        Simulation(const Environment& env_init, int nIter, bool plot); //Constructor
 };
 
 //======================================================================
 //                           Member functions
 //======================================================================
 
-Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot)
+Simulation::Simulation(const Environment& env_init, int nIter, bool plot)
 {   
     //Initialization
     environment = env_init;
@@ -59,7 +69,7 @@ Simulation::Simulation(const Environment_t& env_init, int nIter, bool plot)
     for (int i=1; i<nIter; i++)
     {   
         //Keep in memory the old environment
-        Environment_t oldEnvironment(environment);
+        Environment oldEnvironment(environment);
 
         //environment=selection(diffusion(environmentalChange(environment, i, a, b)));
         environment=environment.migration().selection();

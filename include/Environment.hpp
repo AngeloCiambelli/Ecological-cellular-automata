@@ -18,11 +18,22 @@
 
 using namespace std;
 
+
 //======================================================================
-//Class Environment_t at time t definition
+//                          Description
+//======================================================================
+//
+// Define the class to host environment characteristics. 
+// Notably, generation and general parameters, initial repartions,
+//
+// Define related functions and operators. 
+// Notably, for display.
+//
+//======================================================================
+//Class Environment definition
 //======================================================================
 
-class Environment_t
+class Environment
 {
     public :
         int n;                                                    //Number of columns of the lattice
@@ -37,28 +48,28 @@ class Environment_t
         string envType;
 
         vector<VariableEnv<Vecteur<float>>> conditions;           //Environmental matrix
-        vector<Population> species;                                   //List of species that live in the Environment_t
+        vector<Population> species;                                   //List of species that live in the Environment
         vector<vector<Population>> repartition;                       //Species repartition matrix
         vector<int> numberOfChanges;                              //Number of changes in the occupancy for every spot in the lattice
         map<string, Vecteur<float>> adaptationScores;             //Species adaptation scores
         
         //Constructors
-        Environment_t(){};                                                                                                    //Empty constructor
-        Environment_t(vector<Population> sp, map<string,float> parameters, string filename, string GenType, string repType, string variability);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
-        Environment_t(const sf::Image& image, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability); //Constructor of an environment matrix using image for environmental conditions
-        Environment_t(const sf::Image& image1, const sf::Image& image2, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability);
+        Environment(){};                                                                                                    //Empty constructor
+        Environment(vector<Population> sp, map<string,float> parameters, string filename, string GenType, string repType, string variability);      //Constructor of an environment matrix using functors for initial species repartition and environmental conditions 
+        Environment(const sf::Image& image, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability); //Constructor of an environment matrix using image for environmental conditions
+        Environment(const sf::Image& image1, const sf::Image& image2, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability);
 
         //Member functions
-        Environment_t migration();
-        Environment_t selection();
-        Environment_t environmentalChange(float t);
+        Environment migration();
+        Environment selection();
+        Environment environmentalChange(float t);
         Vecteur<float> countPopulations();
         void display(string type, int envDimension);
         void display(string type, int envDimension, int i);
 
         //Operators
-        bool operator ==(const Environment_t& env){return(this->repartition==env.repartition);};
-        bool operator !=(const Environment_t& env){return(this->repartition!=env.repartition);};
+        bool operator ==(const Environment& env){return(this->repartition==env.repartition);};
+        bool operator !=(const Environment& env){return(this->repartition!=env.repartition);};
 };
 
 //======================================================================
@@ -66,7 +77,7 @@ class Environment_t
 //======================================================================
 
 //Print an envrionment in the terminal(repartition and conditions)
-ostream& operator <<(ostream & out, const Environment_t& E)
+ostream& operator <<(ostream & out, const Environment& E)
 {   
     for(int i=0; i<E.n; i++)
         {
@@ -109,7 +120,7 @@ string makeName(string filename, map<string,float> parameters, vector<Population
 }
 
 //Convert the repartition to a pixel array
-tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(const Environment_t& env){
+tuple<sf::Uint8*, string, string, sf::Color, sf::Color> repartitionToPixel(const Environment& env){
 
     //Create the color palette
     Vecteur<Vecteur<int>> colorMap(env.species.size(), Vecteur<int> ({0, 0, 0, 255}));
@@ -221,7 +232,7 @@ tuple<sf::Uint8*, string, string, sf::Color, sf::Color> envToPixel(const vector<
 
 //float unitEnv, int m, float a, float b,
 //Constructor from functors only
-Environment_t::Environment_t(vector<Population> sp, map<string,float> parameters, string filename, string genType, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+Environment::Environment(vector<Population> sp, map<string,float> parameters, string filename, string genType, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];    
@@ -262,7 +273,7 @@ Environment_t::Environment_t(vector<Population> sp, map<string,float> parameters
 }
 
 //Constructor from functors and image to set environmental parameters
-Environment_t::Environment_t(const sf::Image& image, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+Environment::Environment(const sf::Image& image, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];    
@@ -299,7 +310,7 @@ Environment_t::Environment_t(const sf::Image& image, vector<Population> sp, map<
 }
 
 //Constructor from functors and two images to set environmental parameters
-Environment_t::Environment_t(const sf::Image& image1, const sf::Image& image2, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
+Environment::Environment(const sf::Image& image1, const sf::Image& image2, vector<Population> sp, map<string,float> parameters, string filename, string repType, string variability="variable") : numberOfChanges(int(parameters["m"]*parameters["n"]), 0)
 {   
     //Extract the parameters
     n = parameters["n"];    
@@ -336,10 +347,10 @@ Environment_t::Environment_t(const sf::Image& image1, const sf::Image& image2, v
 }
 
 //Diffusion of the species on the grid (determinist)
-Environment_t Environment_t::migration()
+Environment Environment::migration()
 {
     //New environment
-    Environment_t newEnv(*this);
+    Environment newEnv(*this);
 
     for (int i=0; i<this->m; i++){
         for (int j=0; j<this->n; j++){
@@ -373,10 +384,10 @@ Environment_t Environment_t::migration()
 }
 
 //Selection of the best adapted Population in each node of the grid (determinist)
-Environment_t Environment_t::selection(){
+Environment Environment::selection(){
 
     //New environment
-    Environment_t newEnv(*this);
+    Environment newEnv(*this);
 
     //If the environnement is variable (changing with time) re-calculate everytime all the scores
     if (this->envType=="variable"){
@@ -448,7 +459,7 @@ Environment_t Environment_t::selection(){
 }
 
 //Change in the environment according to the functor : f_t(conditions)
-Environment_t Environment_t::environmentalChange(float t){   
+Environment Environment::environmentalChange(float t){   
     for (int i=0; i<this->m; i++){
         for (int j=0; j<this->n; j++){
             envChangeFunctor f;
@@ -459,7 +470,7 @@ Environment_t Environment_t::environmentalChange(float t){
 } 
 
 //Count the number of individuals in each populations
-Vecteur<float> Environment_t::countPopulations(){
+Vecteur<float> Environment::countPopulations(){
     Vecteur<float> counts(this->species.size(),0);
     for (int i=0; i<this->m; i++){
         for (int j=0; j<this->n; j++){
@@ -472,7 +483,7 @@ Vecteur<float> Environment_t::countPopulations(){
 }
 
 //Custom display of the environment
-void Environment_t::display(string type, int envDimension){
+void Environment::display(string type, int envDimension){
     tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  repartitionPixels = repartitionToPixel(*this);
     tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  changePixels = changeToPixel(this->numberOfChanges);
     tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  envPixels = envToPixel(this->conditions, envDimension);
@@ -485,7 +496,7 @@ void Environment_t::display(string type, int envDimension){
 }
 
 //Custom display of the environment with time in the name
-void Environment_t::display(string type, int envDimension, int i){
+void Environment::display(string type, int envDimension, int i){
 
     //Generate pixel array
     tuple<sf::Uint8*, string, string, sf::Color, sf::Color>  repartitionPixels = repartitionToPixel(*this);

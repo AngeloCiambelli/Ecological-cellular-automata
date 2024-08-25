@@ -15,8 +15,11 @@ using namespace std;
 //===========================================================================
 //                          Description
 //===========================================================================
-
-
+//
+// Class Vecteur define to be mathématical vectors. 
+// We define them using the class vector from C++ standard library.
+// we define extra operations.
+//
 //===========================================================================
 //                          Define vector class
 //===========================================================================

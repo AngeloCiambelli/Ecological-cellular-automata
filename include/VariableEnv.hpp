@@ -11,7 +11,15 @@
 using namespace std;
 
 //========================================================
-//Class definition
+//                   Description
+//========================================================
+//
+// Define the class to host environmental conditions.
+//
+// Define related functions and operators.
+//
+//========================================================
+//                  Class definition
 //========================================================
 
 // VariableEnv class definition
@@ -34,7 +42,7 @@ class VariableEnv
 };
 
 //========================================================
-//External functions
+//              External functions
 //========================================================
 
 template<typename T>
